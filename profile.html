@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PULLZ Hub | Profile</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Profile specific styles */
+    .profile-section { padding: 8rem 0 4rem; }
+    .profile-card {
+      background: rgba(17, 24, 39, 0.6);
+      border: 1px solid var(--border-light);
+      border-radius: 24px;
+      padding: 3rem;
+      max-width: 600px;
+      margin: 0 auto;
+      text-align: center;
+      position: relative;
+    }
+    .profile-avatar-container {
+      position: relative;
+      width: 120px; height: 120px;
+      margin: 0 auto 1.5rem;
+      cursor: pointer;
+    }
+    .profile-avatar-container:hover .avatar-overlay {
+      opacity: 1;
+    }
+    .avatar-overlay {
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.6);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 0.9rem; font-weight: bold;
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .profile-avatar {
+      width: 100%; height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--brand-cyan);
+      box-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
+    }
+    .verified-badge {
+      position: absolute;
+      bottom: 5px; right: 5px;
+      width: 32px; height: 32px;
+      background: var(--brand-cyan);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      border: 3px solid #030712;
+      color: #000;
+      font-weight: bold;
+      font-size: 14px;
+      box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+    }
+    .profile-name { font-size: 2rem; margin-bottom: 0.5rem; }
+    .profile-email { color: var(--text-muted); margin-bottom: 2rem; }
+    
+    .form-group { text-align: left; margin-bottom: 1.5rem; }
+    .form-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+    .form-group input {
+      width: 100%; padding: 0.8rem 1rem;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px; color: white;
+      outline: none; box-sizing: border-box;
+    }
+    .form-group input:focus { border-color: var(--brand-cyan); }
+    .form-group input:disabled { opacity: 0.5; cursor: not-allowed; }
+    
+    .profile-divider {
+      height: 1px; background: rgba(255,255,255,0.1);
+      margin: 2rem 0;
+    }
+    
+    .status-msg {
+      padding: 0.8rem; border-radius: 8px; margin-bottom: 1rem; display: none; font-size: 0.9rem;
+    }
+    .status-msg.error { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+    .status-msg.success { background: rgba(16, 185, 129, 0.1); color: var(--brand-green); }
+  </style>
+</head>
+<body>
+  <div class="bg-animated">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+  </div>
+
+  <header class="site-header">
+    <nav class="nav shell" aria-label="Primary navigation">
+      <a class="brand" href="index.html">
+        <span class="brand-mark">◆</span>
+        <span><strong>PULLZ</strong> Hub</span>
+      </a>
+      <div class="nav-links">
+        <a href="index.html">Home</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="profile-section shell">
+    <div class="profile-card">
+      <div class="profile-avatar-container" id="avatar-container">
+        <!-- Default Avatar -->
+        <img src="https://ui-avatars.com/api/?name=User&background=06b6d4&color=fff&size=150" alt="Profile" class="profile-avatar" id="avatar-img">
+        <div class="avatar-overlay">Change</div>
+        <div class="verified-badge" title="Verified Account">✓</div>
+        <input type="file" id="avatar-upload" accept="image/*" style="display: none;">
+      </div>
+      <h2 class="profile-name" id="display-username">Loading...</h2>
+      <p class="profile-email" id="display-email">Loading...</p>
+
+      <div class="profile-divider"></div>
+
+      <!-- Change Username Form -->
+      <form id="username-form">
+        <h3 style="text-align: left; margin-bottom: 1rem;">Change Username (One-time only)</h3>
+        <div id="username-status" class="status-msg"></div>
+        <div class="form-group">
+          <label>New Username</label>
+          <input type="text" id="new-username" required autocomplete="off">
+        </div>
+        <button type="submit" class="button button-primary" id="btn-change-username" style="width: 100%;">Update Username</button>
+      </form>
+
+      <div class="profile-divider"></div>
+
+      <!-- Change Password Form -->
+      <form id="password-form">
+        <h3 style="text-align: left; margin-bottom: 1rem;">Change Password</h3>
+        <div id="password-status" class="status-msg"></div>
+        <div class="form-group">
+          <label>Current Password</label>
+          <input type="password" id="old-password" required>
+        </div>
+        <div class="form-group">
+          <label>New Password</label>
+          <input type="password" id="new-password" required minlength="8">
+        </div>
+        <button type="submit" class="button button-ghost" style="width: 100%; border-color: rgba(255,255,255,0.2);">Update Password</button>
+      </form>
+
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="shell footer-layout">
+      <div>
+        <a class="brand" href="index.html">
+          <span class="brand-mark">◆</span>
+          <span><strong>PULLZ</strong> Hub</span>
+        </a>
+      </div>
+      <div class="footer-center">
+        <p>★ Redefining Automation</p>
+        <p style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">&copy; 2026 PULLZ Hub. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="auth-modal.js"></script>
+  <script type="module">
+    import { auth, db, doc, getDoc, setDoc, updatePassword, reauthenticateWithCredential, EmailAuthProvider, onAuthStateChanged } from './firebase-config.js';
+    import { deleteDoc } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js';
+
+    const usernameForm = document.getElementById('username-form');
+    const passwordForm = document.getElementById('password-form');
+    const uStatus = document.getElementById('username-status');
+    const pStatus = document.getElementById('password-status');
+    const newUsernameInput = document.getElementById('new-username');
+    const btnUsername = document.getElementById('btn-change-username');
+
+    let currentUserDoc = null;
+    let currentUsername = "";
+
+    function showMsg(el, msg, type) {
+      el.textContent = msg;
+      el.className = 'status-msg ' + type;
+      el.style.display = 'block';
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.href = 'index.html';
+        return;
+      }
+      
+      document.getElementById('display-email').textContent = user.email;
+      
+      // Fetch user data
+      const userRef = doc(db, 'users', user.uid);
+      const snap = await getDoc(userRef);
+      
+      if (snap.exists()) {
+        currentUserDoc = snap.data();
+        currentUsername = currentUserDoc.username;
+        document.getElementById('display-username').textContent = '@' + currentUsername;
+        let avatarSrc = `https://ui-avatars.com/api/?name=${currentUsername}&background=06b6d4&color=fff&size=150`;
+        if (currentUserDoc.avatarBase64) {
+          avatarSrc = currentUserDoc.avatarBase64;
+        }
+        document.getElementById('avatar-img').src = avatarSrc;
+        
+        if (currentUserDoc.hasChangedUsername) {
+          newUsernameInput.disabled = true;
+          newUsernameInput.value = "Username already changed once";
+          btnUsername.disabled = true;
+          btnUsername.style.opacity = '0.5';
+          btnUsername.textContent = 'Change Locked';
+        }
+      } else {
+        // Fallback for very first accounts where we didn't store the username locally on profile
+        document.getElementById('display-username').textContent = user.email.split('@')[0];
+      }
+    });
+
+    usernameForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const newU = newUsernameInput.value.trim().toLowerCase();
+      
+      if (newU === currentUsername) {
+        showMsg(uStatus, "This is already your username!", "error");
+        return;
+      }
+      
+      if (newU.length < 5) {
+        showMsg(uStatus, "Username must be at least 5 characters long!", "error");
+        return;
+      }
+
+      try {
+        // Check if taken
+        const newRef = doc(db, 'usernames', newU);
+        const checkSnap = await getDoc(newRef);
+        if (checkSnap.exists()) {
+          showMsg(uStatus, "Username is already taken!", "error");
+          return;
+        }
+
+        // Claim new username
+        await setDoc(newRef, { uid: auth.currentUser.uid, email: auth.currentUser.email, createdAt: new Date().toISOString() });
+        
+        // Delete old username if we had one
+        if (currentUsername) {
+          const oldRef = doc(db, 'usernames', currentUsername);
+          await deleteDoc(oldRef);
+        }
+
+        // Update user doc
+        await setDoc(doc(db, 'users', auth.currentUser.uid), {
+          username: newU,
+          email: auth.currentUser.email,
+          hasChangedUsername: true,
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+
+        showMsg(uStatus, "Username updated successfully!", "success");
+        newUsernameInput.disabled = true;
+        btnUsername.disabled = true;
+        btnUsername.style.opacity = '0.5';
+        btnUsername.textContent = 'Change Locked';
+        document.getElementById('display-username').textContent = '@' + newU;
+        if (!currentUserDoc || !currentUserDoc.avatarBase64) {
+          document.getElementById('avatar-img').src = `https://ui-avatars.com/api/?name=${newU}&background=06b6d4&color=fff&size=150`;
+        }
+
+      } catch (err) {
+        showMsg(uStatus, "Error: " + err.message, "error");
+      }
+    });
+
+    // Avatar Upload Logic
+    const avatarContainer = document.getElementById('avatar-container');
+    const avatarUpload = document.getElementById('avatar-upload');
+
+    avatarContainer.addEventListener('click', () => {
+      avatarUpload.click();
+    });
+
+    avatarUpload.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = async () => {
+          // Resize/compress with Canvas
+          const canvas = document.createElement('canvas');
+          const MAX_SIZE = 200;
+          let width = img.width;
+          let height = img.height;
+          
+          if (width > height) {
+            if (width > MAX_SIZE) {
+              height *= MAX_SIZE / width;
+              width = MAX_SIZE;
+            }
+          } else {
+            if (height > MAX_SIZE) {
+              width *= MAX_SIZE / height;
+              height = MAX_SIZE;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Convert to Base64 (JPEG, 0.8 quality)
+          const base64String = canvas.toDataURL('image/jpeg', 0.8);
+          
+          // Update UI
+          document.getElementById('avatar-img').src = base64String;
+          
+          // Save to Firestore
+          try {
+            await setDoc(doc(db, 'users', auth.currentUser.uid), {
+              avatarBase64: base64String,
+              updatedAt: new Date().toISOString()
+            }, { merge: true });
+            
+            // Re-fetch current user to refresh nav badge
+            window.location.reload(); 
+          } catch(err) {
+            console.error("Failed to save avatar", err);
+            alert("Eroare la salvarea pozei de profil!");
+          }
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    passwordForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const oldP = document.getElementById('old-password').value;
+      const newP = document.getElementById('new-password').value;
+
+      try {
+        const cred = EmailAuthProvider.credential(auth.currentUser.email, oldP);
+        await reauthenticateWithCredential(auth.currentUser, cred);
+        await updatePassword(auth.currentUser, newP);
+        showMsg(pStatus, "Parola a fost schimbată cu succes!", "success");
+        passwordForm.reset();
+      } catch (err) {
+        if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') {
+          showMsg(pStatus, "Parola veche este incorectă!", "error");
+        } else {
+          showMsg(pStatus, "Eroare: " + err.message, "error");
+        }
+      }
+    });
+  </script>
+</body>
+</html>

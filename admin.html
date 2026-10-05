@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PULLZ Hub | Control Panel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .admin-section { padding: 8rem 0 4rem; }
+    .admin-container {
+      background: rgba(17, 24, 39, 0.7);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 16px;
+      padding: 2rem;
+      backdrop-filter: blur(10px);
+    }
+    .admin-header {
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding-bottom: 1rem; margin-bottom: 2rem;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .admin-header h2 { color: #ef4444; margin: 0; font-family: 'Outfit', sans-serif; }
+    
+    .users-table {
+      width: 100%; border-collapse: collapse; text-align: left;
+    }
+    .users-table th {
+      padding: 1rem; border-bottom: 2px solid rgba(255,255,255,0.1);
+      color: var(--text-muted); font-size: 0.9rem;
+    }
+    .users-table td {
+      padding: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05);
+      vertical-align: middle;
+    }
+    .user-info { display: flex; align-items: center; gap: 1rem; }
+    .user-info img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+    .role-badge {
+      font-size: 0.7rem; font-weight: bold; text-transform: uppercase;
+      padding: 0.2rem 0.5rem; border-radius: 4px; letter-spacing: 0.5px;
+      display: inline-block;
+    }
+    .role-Owner { background: linear-gradient(45deg, #ef4444, #f59e0b); color: white; }
+    .role-Admin { background: #ef4444; color: white; }
+    .role-Scripter { background: #8b5cf6; color: white; }
+    .role-Helper { background: #10b981; color: white; }
+    .role-Member { background: rgba(255,255,255,0.1); color: var(--text-muted); }
+    
+    .status-badge {
+      font-size: 0.7rem; font-weight: bold; padding: 0.2rem 0.5rem; border-radius: 4px;
+    }
+    .status-ok { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+    .status-muted { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+    .status-banned { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+
+    .action-btn {
+      background: transparent; border: 1px solid rgba(255,255,255,0.2);
+      color: white; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer;
+      font-size: 0.8rem; margin-right: 0.3rem; transition: 0.2s;
+    }
+    .action-btn:hover { background: rgba(255,255,255,0.1); }
+    .btn-danger:hover { background: rgba(239, 68, 68, 0.2); border-color: #ef4444; color: #ef4444; }
+    .btn-warn:hover { background: rgba(245, 158, 11, 0.2); border-color: #f59e0b; color: #f59e0b; }
+    .btn-success:hover { background: rgba(16, 185, 129, 0.2); border-color: #10b981; color: #10b981; }
+
+    #loading-users { text-align: center; padding: 2rem; color: var(--brand-cyan); }
+
+    /* Edit Modal */
+    .edit-modal {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
+      z-index: 2000; display: none; align-items: center; justify-content: center;
+    }
+    .edit-modal-content {
+      background: #111827; border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 16px; width: 90%; max-width: 400px;
+      padding: 2rem; box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+      position: relative;
+    }
+    .edit-close {
+      position: absolute; top: 1rem; right: 1rem;
+      background: transparent; border: none; color: white; font-size: 1.5rem; cursor: pointer;
+    }
+    .edit-input-group { margin-bottom: 1rem; }
+    .edit-input-group label { display: block; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--text-muted); }
+    .edit-input-group input, .edit-input-group select {
+      width: 100%; padding: 0.6rem; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px; color: white; box-sizing: border-box; font-family: 'Inter', sans-serif;
+    }
+    .edit-input-group input:disabled { color: #6b7280; cursor: not-allowed; }
+    .edit-input-group select { appearance: none; }
+    .edit-save-btn {
+      width: 100%; padding: 0.8rem; background: var(--brand-cyan); color: #000;
+      border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-animated">
+    <div class="blob blob-1" style="background: rgba(239,68,68,0.2);"></div>
+    <div class="blob blob-2" style="background: rgba(245,158,11,0.2);"></div>
+  </div>
+
+  <header class="site-header">
+    <nav class="nav shell" aria-label="Primary navigation">
+      <a class="brand" href="index.html">
+        <span class="brand-mark" style="color: #ef4444;">◆</span>
+        <span><strong>PULLZ</strong> Control</span>
+      </a>
+      <div class="nav-links">
+        <a href="index.html">Home</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="admin-section shell">
+    <div class="admin-container">
+      <div class="admin-header">
+        <h2>System Administration</h2>
+        <span id="admin-viewer">Loading...</span>
+      </div>
+
+      <div id="loading-users">Fetching user database...</div>
+
+      <table class="users-table" id="users-table" style="display: none;">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="users-body">
+          <!-- Populated by JS -->
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <div class="edit-modal" id="edit-modal">
+    <div class="edit-modal-content">
+      <button class="edit-close" onclick="document.getElementById('edit-modal').style.display='none'">&times;</button>
+      <h3 style="color: white; margin-top: 0; font-family: 'Outfit', sans-serif;">Edit User</h3>
+      <input type="hidden" id="edit-uid">
+      
+      <div class="edit-input-group">
+        <label>Username</label>
+        <input type="text" id="edit-username">
+      </div>
+      <div class="edit-input-group">
+        <label>Avatar URL (or Base64)</label>
+        <input type="text" id="edit-avatar" placeholder="Leave empty for default">
+      </div>
+      <div class="edit-input-group">
+        <label>Role</label>
+        <select id="edit-role">
+          <option value="Member">Member</option>
+          <option value="Helper">Helper</option>
+          <option value="Scripter">Scripter</option>
+          <option value="Admin">Admin</option>
+          <option value="Owner">Owner</option>
+        </select>
+      </div>
+      <div class="edit-input-group" title="Firebase blocks direct password changes on client side.">
+        <label>Password</label>
+        <input type="password" disabled value="********" title="Security Restricted (Backend Required)">
+        <span style="font-size: 0.7rem; color: var(--text-muted);">Restricted by Firebase Security</span>
+      </div>
+      
+      <div style="display: flex; gap: 1rem; margin-bottom: 0.5rem;">
+        <button class="action-btn btn-warn" id="edit-mute-btn" style="flex:1;">Mute</button>
+        <button class="action-btn btn-danger" id="edit-ban-btn" style="flex:1;">Ban</button>
+      </div>
+      
+      <button class="edit-save-btn" onclick="window.saveUserEdit()">Save Changes</button>
+    </div>
+  </div>
+
+  <script type="module" src="auth-modal.js"></script>
+  <script type="module">
+    import { auth, db, doc, getDoc, getDocs, setDoc, updateDoc, collection, onAuthStateChanged } from './firebase-config.js';
+
+    let viewerRole = null;
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.href = 'index.html';
+        return;
+      }
+      
+      const snap = await getDoc(doc(db, 'users', user.uid));
+      if (snap.exists()) {
+        const data = snap.data();
+        viewerRole = data.role;
+        
+        if (viewerRole !== 'Owner' && viewerRole !== 'Admin') {
+          alert("Access Denied! You do not have administrative privileges.");
+          window.location.href = 'index.html';
+          return;
+        }
+
+        document.getElementById('admin-viewer').innerHTML = `Logged in as: <span class="role-badge role-${viewerRole}">${viewerRole}</span> ${data.username}`;
+        loadUsers();
+      } else {
+        // Auto-migration for legacy users
+        let usernameStr = prompt("Database requires an update. Please enter your username (e.g. pullzcheats):");
+        if (usernameStr) {
+          try {
+            await setDoc(doc(db, 'users', user.uid), {
+              username: usernameStr.toLowerCase(),
+              email: user.email,
+              role: usernameStr.toLowerCase() === 'pullzcheats' ? 'Owner' : 'Member',
+              isMuted: false,
+              isBanned: false,
+              hasChangedUsername: false,
+              createdAt: new Date().toISOString()
+            });
+            window.location.reload();
+          } catch(e) {
+            alert("Update Error: " + e.message);
+          }
+        }
+      }
+    });
+
+    window.usersData = {};
+
+    async function loadUsers() {
+      const tbody = document.getElementById('users-body');
+      tbody.innerHTML = '';
+      
+      const querySnapshot = await getDocs(collection(db, 'users'));
+      window.usersData = {};
+      
+      querySnapshot.forEach((docSnap) => {
+        const user = docSnap.data();
+        const uid = docSnap.id;
+        window.usersData[uid] = user;
+        const role = user.role || 'Member';
+        
+        let avatar = `https://ui-avatars.com/api/?name=${user.username}&background=06b6d4&color=fff`;
+        if (user.avatarBase64) avatar = user.avatarBase64;
+
+        let statusClass = 'status-ok';
+        let statusText = 'OK';
+        if (user.isMuted) { statusClass = 'status-muted'; statusText = 'MUTED'; }
+        if (user.isBanned) { statusClass = 'status-banned'; statusText = 'BANNED'; }
+
+        const tr = document.createElement('tr');
+        
+        // Build Action Buttons
+        let actionsHtml = '';
+        if (role !== 'Owner') {
+          actionsHtml = `<button class="action-btn" onclick="window.openEditModal('${uid}')">Edit User</button>`;
+        } else {
+          actionsHtml = '<span style="color:var(--text-muted); font-size: 0.8rem;">Supreme Overlord</span>';
+        }
+
+        tr.innerHTML = `
+          <td>
+            <div class="user-info">
+              <img src="${avatar}">
+              <strong>${user.username}</strong>
+            </div>
+          </td>
+          <td>${user.email}</td>
+          <td><span class="role-badge role-${role}">${role}</span></td>
+          <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+          <td>${actionsHtml}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('loading-users').style.display = 'none';
+      document.getElementById('users-table').style.display = 'table';
+    }
+
+    // Expose functions to window for onclick
+    window.openEditModal = (uid) => {
+      const user = window.usersData[uid];
+      if(!user) return;
+      
+      document.getElementById('edit-uid').value = uid;
+      document.getElementById('edit-username').value = user.username;
+      document.getElementById('edit-avatar').value = user.avatarBase64 || '';
+      document.getElementById('edit-role').value = user.role || 'Member';
+      
+      const muteBtn = document.getElementById('edit-mute-btn');
+      if (user.isMuted) {
+        muteBtn.textContent = 'Unmute';
+        muteBtn.className = 'action-btn btn-success';
+        muteBtn.onclick = () => window.toggleMute(uid, false);
+      } else {
+        muteBtn.textContent = 'Mute';
+        muteBtn.className = 'action-btn btn-warn';
+        muteBtn.onclick = () => window.toggleMute(uid, true);
+      }
+      
+      const banBtn = document.getElementById('edit-ban-btn');
+      if (user.isBanned) {
+        banBtn.textContent = 'Unban';
+        banBtn.className = 'action-btn btn-success';
+        banBtn.onclick = () => window.toggleBan(uid, false);
+      } else {
+        banBtn.textContent = 'Ban';
+        banBtn.className = 'action-btn btn-danger';
+        banBtn.onclick = () => window.toggleBan(uid, true);
+      }
+      
+      document.getElementById('edit-modal').style.display = 'flex';
+    };
+
+    window.saveUserEdit = async () => {
+      const uid = document.getElementById('edit-uid').value;
+      const oldUser = window.usersData[uid];
+      const newUsername = document.getElementById('edit-username').value.trim();
+      const newAvatar = document.getElementById('edit-avatar').value.trim();
+      const newRole = document.getElementById('edit-role').value;
+      
+      const updates = {};
+      if (newRole !== oldUser.role) updates.role = newRole;
+      if (newAvatar !== (oldUser.avatarBase64 || '')) updates.avatarBase64 = newAvatar;
+      if (newAvatar === '') updates.avatarBase64 = null;
+      
+      try {
+        if (newUsername !== oldUser.username) {
+           const { doc, getDoc, setDoc, deleteDoc } = await import('./firebase-config.js');
+           const checkSnap = await getDoc(doc(db, 'usernames', newUsername));
+           if(checkSnap.exists()) return alert("Username already taken!");
+           
+           await setDoc(doc(db, 'usernames', newUsername), { uid: uid });
+           await deleteDoc(doc(db, 'usernames', oldUser.username));
+           updates.username = newUsername;
+        }
+        
+        if (Object.keys(updates).length > 0) {
+           await updateDoc(doc(db, 'users', uid), updates);
+        }
+        document.getElementById('edit-modal').style.display = 'none';
+        loadUsers();
+      } catch(e) {
+        alert("Error saving user: " + e.message);
+      }
+    };
+    
+    window.toggleMute = async (uid, muteStatus) => {
+      await updateDoc(doc(db, 'users', uid), { isMuted: muteStatus });
+      loadUsers();
+    };
+    
+    window.toggleBan = async (uid, banStatus) => {
+      if(banStatus && !confirm("Are you sure you want to BAN this user?")) return;
+      await updateDoc(doc(db, 'users', uid), { isBanned: banStatus });
+      loadUsers();
+    };
+  </script>
+</body>
+</html>

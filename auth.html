@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PULLZ Hub | Secure Access</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      background: var(--bg-main);
+    }
+    .auth-container {
+      background: rgba(17, 24, 39, 0.8);
+      padding: 3rem;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 400px;
+      border: 1px solid var(--border-light);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
+    }
+    .auth-container::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 3px;
+      background: var(--brand-cyan);
+      box-shadow: 0 0 15px var(--brand-cyan);
+    }
+    .auth-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .auth-header h2 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+    .auth-header p {
+      color: var(--text-muted);
+    }
+    .input-group {
+      margin-bottom: 1.5rem;
+    }
+    .input-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+    .input-group input {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      color: white;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.3s;
+      box-sizing: border-box;
+    }
+    .input-group input:focus {
+      border-color: var(--brand-cyan);
+    }
+    .auth-error {
+      color: #ef4444;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+      text-align: center;
+      display: none;
+      background: rgba(239, 68, 68, 0.1);
+      padding: 0.5rem;
+      border-radius: 4px;
+    }
+    .auth-success {
+      color: var(--brand-green);
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+      text-align: center;
+      display: none;
+      background: rgba(16, 185, 129, 0.1);
+      padding: 0.5rem;
+      border-radius: 4px;
+    }
+    .toggle-form {
+      text-align: center;
+      margin-top: 1.5rem;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+    .toggle-form span {
+      color: var(--brand-cyan);
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .toggle-form span:hover {
+      text-decoration: underline;
+    }
+    
+    #register-form { display: none; }
+  </style>
+</head>
+<body>
+  <div class="bg-animated">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+  </div>
+
+  <div class="auth-container">
+    <div class="auth-header">
+      <h2>PULLZ Access</h2>
+      <p>System Authentication Required</p>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <form id="login-form">
+      <div class="auth-error" id="login-error"></div>
+      <div class="input-group">
+        <label>Email Address</label>
+        <input type="email" id="login-email" required>
+      </div>
+      <div class="input-group">
+        <label>Password</label>
+        <input type="password" id="login-password" required>
+      </div>
+      <button type="submit" class="button button-primary" style="width: 100%;">Authenticate</button>
+      <div class="toggle-form">
+        No clearance? <span id="go-to-register">Request Access</span>
+      </div>
+    </form>
+
+    <!-- REGISTER FORM -->
+    <form id="register-form">
+      <div class="auth-error" id="register-error"></div>
+      <div class="auth-success" id="register-success"></div>
+      <div class="input-group">
+        <label>Desired Username</label>
+        <input type="text" id="reg-username" required autocomplete="off">
+      </div>
+      <div class="input-group">
+        <label>Email Address</label>
+        <input type="email" id="reg-email" required>
+      </div>
+      <div class="input-group">
+        <label>Password</label>
+        <input type="password" id="reg-password" required minlength="6">
+      </div>
+      <button type="submit" class="button button-primary" style="width: 100%;">Create Profile</button>
+      <div class="toggle-form">
+        Already have access? <span id="go-to-login">Authenticate</span>
+      </div>
+    </form>
+  </div>
+
+  <script type="module">
+    import { auth, db, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, doc, setDoc, getDoc } from './firebase-config.js';
+
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+    
+    // Toggles
+    document.getElementById('go-to-register').addEventListener('click', () => {
+      loginForm.style.display = 'none';
+      registerForm.style.display = 'block';
+    });
+    
+    document.getElementById('go-to-login').addEventListener('click', () => {
+      registerForm.style.display = 'none';
+      loginForm.style.display = 'block';
+    });
+
+    // Login
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value;
+      const pass = document.getElementById('login-password').value;
+      const errBox = document.getElementById('login-error');
+      
+      try {
+        errBox.style.display = 'none';
+        const userCred = await signInWithEmailAndPassword(auth, email, pass);
+        
+        if (!userCred.user.emailVerified) {
+          errBox.textContent = "Please verify your email address first! Check your inbox.";
+          errBox.style.display = 'block';
+        } else {
+          // Success, redirect back
+          window.location.href = 'pixel-worlds.html';
+        }
+      } catch(err) {
+        errBox.textContent = "Invalid credentials or account does not exist.";
+        errBox.style.display = 'block';
+      }
+    });
+
+    // Register
+    registerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('reg-username').value.trim().toLowerCase();
+      const email = document.getElementById('reg-email').value;
+      const pass = document.getElementById('reg-password').value;
+      const errBox = document.getElementById('register-error');
+      const succBox = document.getElementById('register-success');
+      
+      errBox.style.display = 'none';
+      succBox.style.display = 'none';
+
+      // 1. Check if username exists
+      try {
+        const userRef = doc(db, 'usernames', username);
+        const docSnap = await getDoc(userRef);
+        
+        if (docSnap.exists()) {
+          errBox.textContent = "Username is already taken!";
+          errBox.style.display = 'block';
+          return;
+        }
+
+        // 2. Create Auth User
+        const userCred = await createUserWithEmailAndPassword(auth, email, pass);
+        
+        // 3. Claim username
+        await setDoc(userRef, {
+          email: email,
+          uid: userCred.user.uid,
+          createdAt: new Date().toISOString()
+        });
+
+        // 4. Send Verification
+        await sendEmailVerification(userCred.user);
+
+        succBox.textContent = "Account created! A verification link has been sent to your email. You must verify it before logging in.";
+        succBox.style.display = 'block';
+        registerForm.reset();
+
+      } catch(err) {
+        if(err.code === 'auth/email-already-in-use') {
+          errBox.textContent = "This email is already registered!";
+        } else {
+          errBox.textContent = "Error: " + err.message;
+        }
+        errBox.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>
