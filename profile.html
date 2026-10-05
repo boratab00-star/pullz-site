@@ -139,8 +139,14 @@
           <label>New Password</label>
           <input type="password" id="new-password" required minlength="8">
         </div>
-        <button type="submit" class="button button-ghost" style="width: 100%; border-color: rgba(255,255,255,0.2);">Update Password</button>
+    <button type="submit" class="button button-ghost" style="width: 100%; border-color: rgba(255,255,255,0.2);">Update Password</button>
       </form>
+
+      <div class="profile-divider"></div>
+      
+      <button id="btn-logout-profile" class="button" style="width: 100%; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid #ef4444; font-weight: bold; transition: 0.3s; padding: 1rem; border-radius: 8px; cursor: pointer;">
+        Log Out
+      </button>
 
     </div>
   </main>
@@ -162,7 +168,7 @@
 
   <script type="module" src="auth-modal.js"></script>
   <script type="module">
-    import { auth, db, doc, getDoc, setDoc, updatePassword, reauthenticateWithCredential, EmailAuthProvider, onAuthStateChanged } from './firebase-config.js';
+    import { auth, db, doc, getDoc, setDoc, updatePassword, reauthenticateWithCredential, EmailAuthProvider, onAuthStateChanged, signOut } from './firebase-config.js';
     import { deleteDoc } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js';
 
     const usernameForm = document.getElementById('username-form');
@@ -352,6 +358,15 @@
         } else {
           showMsg(pStatus, "Eroare: " + err.message, "error");
         }
+      }
+    });
+
+    document.getElementById('btn-logout-profile').addEventListener('click', async () => {
+      try {
+        await signOut(auth);
+        window.location.href = 'index.html';
+      } catch(e) {
+        console.error("Logout error", e);
       }
     });
   </script>

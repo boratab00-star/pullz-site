@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PULLZ Hub | Mines</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .mines-section {
+      padding: 8rem 0 4rem;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .mines-container {
+      background: rgba(17, 24, 39, 0.7);
+      border: 1px solid rgba(6, 182, 212, 0.2);
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
+      display: flex;
+      flex-direction: row;
+      max-width: 1200px;
+      width: 100%;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    }
+    .mines-sidebar {
+      width: 300px;
+      background: rgba(0,0,0,0.3);
+      padding: 2rem;
+      border-right: 1px solid rgba(255,255,255,0.05);
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    .mines-game-area {
+      flex: 1;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .input-group { display: flex; flex-direction: column; gap: 0.5rem; }
+    .input-group label { color: var(--text-muted); font-size: 0.85rem; font-family: 'Inter', sans-serif; }
+    .mines-input {
+      background: rgba(0,0,0,0.5);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: white; padding: 0.8rem; border-radius: 8px;
+      font-family: 'Inter', sans-serif; outline: none; transition: 0.3s;
+      width: 100%; box-sizing: border-box;
+    }
+    .mines-input:focus { border-color: var(--brand-cyan); }
+    
+    .mines-input-sm {
+      background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); color: white;
+      padding: 0.3rem 0.5rem; border-radius: 6px; font-size: 0.8rem; width: 100%; box-sizing: border-box; outline: none; transition: 0.3s;
+    }
+    .mines-input-sm:focus { border-color: var(--brand-cyan); }
+    
+    /* Hide number arrows */
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+      -webkit-appearance: none; 
+      margin: 0; 
+    }
+    input[type=number] { -moz-appearance: textfield; }
+    
+    .btn-play {
+      background: var(--brand-green); color: black; font-weight: bold; border: none;
+      padding: 1rem; border-radius: 8px; cursor: pointer; transition: 0.3s; font-size: 1.1rem;
+    }
+    .btn-play:hover { background: #34d399; transform: translateY(-2px); }
+    .btn-play:disabled { background: #374151; color: #9ca3af; cursor: not-allowed; transform: none; }
+    
+    .btn-cashout {
+      background: #f59e0b; color: black; font-weight: bold; border: none;
+      padding: 1rem; border-radius: 8px; cursor: pointer; transition: 0.3s; font-size: 1.1rem;
+      display: none;
+    }
+    .btn-cashout:hover { background: #fbbf24; transform: translateY(-2px); }
+    
+    .mines-tab {
+      flex: 1; padding: 0.6rem; background: transparent; border: none; color: #9ca3af; font-weight: bold; font-family: 'Inter', sans-serif; cursor: pointer; border-radius: 6px; transition: 0.3s;
+    }
+    .mines-tab.active { background: rgba(255,255,255,0.1); color: white; }
+    .mines-tab:hover:not(.active) { color: white; }
+    
+    /* Grid */
+    .mines-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      max-width: 450px;
+      width: 100%;
+    }
+    .mine-tile {
+      aspect-ratio: 1;
+      background: rgba(255,255,255,0.05);
+      border: 2px solid rgba(255,255,255,0.1);
+      border-radius: 8px; cursor: pointer;
+      display: flex; justify-content: center; align-items: center;
+      font-size: 2rem; transition: 0.2s; user-select: none;
+    }
+    .mine-tile:hover { background: rgba(255,255,255,0.1); border-color: var(--brand-cyan); }
+    .mine-tile.revealed { cursor: default; }
+    .mine-tile.revealed.gem { background: rgba(16, 185, 129, 0.2); border-color: #10b981; }
+    .mine-tile.revealed.mine { background: rgba(239, 68, 68, 0.2); border-color: #ef4444; }
+    .mine-tile.disabled { opacity: 0.5; }
+    .mine-tile.auto-selected { border-color: #f59e0b; background: rgba(245, 158, 11, 0.15); opacity: 1 !important; }
+    
+    .multiplier-display {
+      font-size: 1.2rem; color: var(--brand-cyan); font-weight: bold; text-align: center;
+      margin-bottom: 1rem; height: 1.5rem;
+    }
+
+    
+    .win-popup {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.5);
+      background: #10b981; border: 2px solid #34d399;
+      padding: 2rem 3rem; border-radius: 20px; text-align: center; color: #022c22;
+      box-shadow: 0 0 50px rgba(16, 185, 129, 0.6);
+      opacity: 0; pointer-events: none; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 100; display: flex; flex-direction: column; gap: 0.5rem;
+    }
+    .win-popup.active {
+      opacity: 1; transform: translate(-50%, -50%) scale(1); pointer-events: all;
+    }
+    .win-popup p { margin: 0; font-size: 1.3rem; font-weight: 600; color: #022c22; }
+
+    /* Right Panel */
+    .mines-right-panel {
+      width: 300px;
+      background: rgba(0,0,0,0.3);
+      border-left: 1px solid rgba(255,255,255,0.05);
+      display: flex;
+      flex-direction: column;
+      max-height: 650px;
+    }
+    .shop-section {
+      padding: 1.5rem;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      text-align: center;
+    }
+    .shop-box {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.05));
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      border-radius: 12px;
+      padding: 1.5rem 1rem;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    }
+    .btn-buy {
+      background: #f59e0b; color: black; font-weight: bold; border: none;
+      padding: 0.8rem 1rem; border-radius: 8px; cursor: pointer; transition: 0.2s;
+      width: 100%; margin-top: 1rem;
+    }
+    .btn-buy:hover { background: #fbbf24; transform: translateY(-2px); }
+    
+    .leaderboard-section {
+      padding: 1.5rem; flex: 1; overflow-y: auto; height: 0; min-height: 200px;
+    }
+    .leaderboard-section::-webkit-scrollbar { width: 6px; }
+    .leaderboard-section::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 10px; }
+    .leaderboard-section::-webkit-scrollbar-thumb { background: rgba(6, 182, 212, 0.5); border-radius: 10px; }
+    .leaderboard-section::-webkit-scrollbar-thumb:hover { background: rgba(6, 182, 212, 0.8); }
+    
+    .leaderboard-item {
+      display: flex; justify-content: space-between; align-items: center;
+      background: rgba(255,255,255,0.02); padding: 0.8rem; border-radius: 8px;
+      margin-bottom: 0.5rem; border: 1px solid rgba(255,255,255,0.05);
+    }
+    .leaderboard-item img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
+    .leaderboard-user { display: flex; align-items: center; gap: 0.8rem; font-weight: 500; }
+    .leaderboard-bal { color: #10b981; font-weight: bold; font-family: 'Inter', sans-serif; }
+
+    @media (max-width: 992px) {
+      .mines-container { flex-direction: column; }
+      .mines-sidebar { width: 100%; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.05); }
+      .mines-right-panel { width: 100%; border-left: none; border-top: 1px solid rgba(255,255,255,0.05); }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-animated">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2" style="background: rgba(16, 185, 129, 0.2);"></div>
+  </div>
+
+  <header class="site-header">
+    <nav class="nav shell" aria-label="Primary navigation">
+      <a class="brand" href="index.html">
+        <span class="brand-mark">◆</span>
+        <span><strong>PULLZ</strong> Hub</span>
+      </a>
+      <div class="nav-links">
+        <a href="index.html">Home</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="mines-section shell">
+    <div class="mines-container">
+      <!-- Sidebar -->
+      <div class="mines-sidebar">
+        
+        <div class="mines-tabs" style="display: flex; background: rgba(0,0,0,0.4); border-radius: 8px; margin-bottom: 1rem; padding: 0.2rem;">
+          <button id="tab-manual" class="mines-tab active">Manual</button>
+          <button id="tab-auto" class="mines-tab">Auto</button>
+        </div>
+
+        <!-- Balance Display -->
+        <div class="balance-display" id="balance-display" style="display: none; background: none; border: none; padding: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 0.5rem; width: 100%; margin-bottom: 1rem;">
+          <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); padding: 0.5rem 1rem; border-radius: 8px; color: #f59e0b; font-weight: bold; width: 100%; text-align: center; box-sizing: border-box;">
+            Balance: $<span id="balance-amount">0.00</span>
+          </div>
+          <div style="font-size: 0.75rem; color: #9ca3af; text-align: center; width: 100%;">
+            Resets to $1,000 in <span id="reset-timer" style="color: #f59e0b; font-weight: bold;">--:--:--</span><br>
+            <span style="opacity: 0.7;">(Only if balance is under $1,000)</span>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label>Bet Amount ($)</label>
+          <input type="number" id="bet-input" class="mines-input" value="10.00" min="1" step="1">
+        </div>
+        <div class="input-group">
+          <label>Mines (1-24)</label>
+          <input type="number" id="mines-count" class="mines-input" value="3" min="1" max="24" step="1">
+        </div>
+        
+        <!-- Advanced Auto Settings -->
+        <div id="auto-settings" style="display: none; flex-direction: column; gap: 6px; margin-top: -10px;">
+          <div style="display: flex; gap: 6px;">
+            <div style="flex: 1; background: rgba(0,0,0,0.4); padding: 6px 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; justify-content: center;">
+              <span style="font-size: 0.6rem; color: #9ca3af; margin-bottom: 2px;">Inc. on Win (%)</span>
+              <input type="number" id="auto-inc-win" value="0" min="0" step="1" style="width: 100%; background: transparent; border: none; color: white; outline: none; font-size: 0.9rem; font-weight: bold; font-family: 'Inter'; padding: 0;">
+            </div>
+            <div style="flex: 1; background: rgba(0,0,0,0.4); padding: 6px 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; justify-content: center;">
+              <span style="font-size: 0.6rem; color: #9ca3af; margin-bottom: 2px;">Inc. on Loss (%)</span>
+              <input type="number" id="auto-inc-loss" value="0" min="0" step="1" style="width: 100%; background: transparent; border: none; color: white; outline: none; font-size: 0.9rem; font-weight: bold; font-family: 'Inter'; padding: 0;">
+            </div>
+          </div>
+          <div style="display: flex; gap: 6px;">
+            <div style="flex: 1; background: rgba(0,0,0,0.4); padding: 6px 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; justify-content: center;">
+              <span style="font-size: 0.6rem; color: #9ca3af; margin-bottom: 2px;">Stop Profit ($)</span>
+              <input type="number" id="auto-stop-profit" value="0" min="0" style="width: 100%; background: transparent; border: none; color: white; outline: none; font-size: 0.9rem; font-weight: bold; font-family: 'Inter'; padding: 0;">
+            </div>
+            <div style="flex: 1; background: rgba(0,0,0,0.4); padding: 6px 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; justify-content: center;">
+              <span style="font-size: 0.6rem; color: #9ca3af; margin-bottom: 2px;">Stop Loss ($)</span>
+              <input type="number" id="auto-stop-loss" value="0" min="0" style="width: 100%; background: transparent; border: none; color: white; outline: none; font-size: 0.9rem; font-weight: bold; font-family: 'Inter'; padding: 0;">
+            </div>
+          </div>
+        </div>
+        
+        <div id="auto-instructions" style="display: none; font-size: 0.8rem; color: #f59e0b; text-align: center; margin-top: 0.5rem;">
+          Pick tiles on the grid to set your Auto Pattern!
+        </div>
+        
+        <div style="margin-top: auto; display: flex; flex-direction: column; gap: 0.5rem;">
+          <div id="profit-preview" style="color: var(--brand-green); font-weight: bold; text-align: center; display: none;">Next Profit: $<span id="next-profit">0.00</span></div>
+          <button class="btn-play" id="btn-play">Bet</button>
+          <button class="btn-cashout" id="btn-cashout">Cashout</button>
+        </div>
+      </div>
+
+      <!-- Game Area -->
+      <div class="mines-game-area" style="position: relative;">
+        
+        <!-- WIN POPUP -->
+        <div class="win-popup" id="win-popup">
+          <p>Congratulations!</p>
+          <h2 id="win-amount-text">$0.00</h2>
+          <p id="win-multiplier-text">1.00x Multiplier</p>
+        </div>
+
+        <div class="multiplier-display" id="multiplier-display">1.00x</div>
+        <div class="mines-grid" id="mines-grid">
+          <!-- JS generates 25 tiles -->
+        </div>
+      </div>
+      
+      <!-- Right Panel: Shop & Leaderboard -->
+      <div class="mines-right-panel">
+        <div class="shop-section">
+          <div class="shop-box" id="shop-box">
+            <h3 style="color: #f59e0b; margin: 0 0 0.5rem 0;">VIP Shop</h3>
+            <p style="font-size: 0.9rem; color: #d1d5db; margin-bottom: 1rem;">PullZFish Permanent Key</p>
+            <div style="font-size: 1.5rem; font-weight: bold; color: white;">$1,000,000</div>
+            <button class="btn-buy" id="btn-buy-vip">Purchase Key</button>
+          </div>
+        </div>
+        
+        <div class="leaderboard-section">
+          <h3 style="margin: 0 0 1rem 0; color: white; font-size: 1.1rem;">Top Balances</h3>
+          <div id="leaderboard-list">
+            <div style="text-align: center; color: var(--text-muted); font-size: 0.9rem;">Loading...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script type="module" src="auth-modal.js?v=2"></script>
+  <script type="module">
+    import { auth, db, doc, getDoc, setDoc, updateDoc, onAuthStateChanged, collection, query, orderBy, limit, getDocs, onSnapshot } from './firebase-config.js';
+
+    let userBalance = 0;
+    let userHighestWin = 0;
+    let userHighestLoss = 0;
+    let isPlaying = false;
+    let grid = [];
+    let revealedGems = 0;
+    let totalMines = 3;
+    let currentBet = 0;
+    let currentMultiplier = 1.0;
+    
+    const gridEl = document.getElementById('mines-grid');
+    const playBtn = document.getElementById('btn-play');
+    const cashoutBtn = document.getElementById('btn-cashout');
+    const balDisplay = document.getElementById('balance-display');
+    const balAmount = document.getElementById('balance-amount');
+    const multDisplay = document.getElementById('multiplier-display');
+
+    let resetInterval;
+
+    function startTimer(lastResetIso) {
+      if (resetInterval) clearInterval(resetInterval);
+      const timerEl = document.getElementById('reset-timer');
+      
+      resetInterval = setInterval(() => {
+        const now = new Date();
+        const lastReset = new Date(lastResetIso);
+        const nextReset = new Date(lastReset.getTime() + 24 * 60 * 60 * 1000);
+        
+        const diffMs = nextReset - now;
+        if (diffMs <= 0) {
+          timerEl.textContent = "00:00:00 (Refresh)";
+          clearInterval(resetInterval);
+          return;
+        }
+        
+        const h = Math.floor(diffMs / (1000 * 60 * 60));
+        const m = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+        const s = Math.floor((diffMs % (1000 * 60)) / 1000);
+        
+        timerEl.textContent = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+      }, 1000);
+    }
+
+    // Create Grid HTML
+    function initGrid() {
+      gridEl.innerHTML = '';
+      for (let i = 0; i < 25; i++) {
+        const tile = document.createElement('div');
+        tile.className = 'mine-tile';
+        tile.dataset.index = i;
+        tile.addEventListener('click', () => handleTileClick(i, tile));
+        gridEl.appendChild(tile);
+      }
+    }
+    initGrid();
+
+    let userUnsubscribe = null;
+    onAuthStateChanged(auth, async (user) => {
+      if (userUnsubscribe) { userUnsubscribe(); userUnsubscribe = null; }
+      if (user) {
+        balDisplay.style.display = 'block';
+        const userRef = doc(db, 'users', user.uid);
+        
+        userUnsubscribe = onSnapshot(userRef, async (snap) => {
+          if (snap.exists()) {
+            let data = snap.data();
+            let needsUpdate = false;
+            
+            let currentBal = data.balance !== undefined ? data.balance : 0;
+            let lastResetStr = data.lastBalanceReset;
+            
+            const now = new Date();
+            let shouldReset = false;
+            
+            if (!lastResetStr) {
+              shouldReset = true;
+            } else {
+              const lastReset = new Date(lastResetStr);
+              const diffHours = (now - lastReset) / (1000 * 60 * 60);
+              if (diffHours >= 24) shouldReset = true;
+            }
+            
+            if (shouldReset && currentBal < 1000) {
+              currentBal = 1000;
+              needsUpdate = true;
+            } else if (!lastResetStr) {
+              needsUpdate = true;
+            }
+            
+            userBalance = currentBal;
+            
+            if (needsUpdate) {
+              const newIso = now.toISOString();
+              await updateDoc(userRef, { 
+                balance: userBalance, 
+                lastBalanceReset: newIso 
+              });
+              startTimer(newIso);
+            } else {
+              startTimer(lastResetStr);
+            }
+            
+            if (data.purchasedKey) {
+              document.getElementById('shop-box').innerHTML = `
+                <h3 style="color: #10b981; margin: 0 0 0.5rem 0;">Unlocked!</h3>
+                <p style="font-size: 0.9rem; color: #d1d5db; margin-bottom: 1rem;">PullZFish Permanent Key</p>
+                <div style="background: rgba(0,0,0,0.5); padding: 0.5rem; border-radius: 6px; font-family: monospace; color: #f59e0b; font-size: 1.1rem; letter-spacing: 1px;">${data.purchasedKey}</div>
+                <p style="font-size: 0.8rem; color: #9ca3af; margin-top: 1rem;">Send this code to an Owner on Discord to claim!</p>
+              `;
+            }
+            
+            userHighestWin = data.highestWin || 0;
+            userHighestLoss = data.highestLoss || 0;
+            
+            balAmount.textContent = userBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('balance-display').style.display = 'flex';
+          }
+        });
+      } else {
+        document.getElementById('balance-display').style.display = 'none';
+      }
+    });
+
+    async function updateFirestoreBalance(newBal) {
+      if(auth.currentUser) {
+        try {
+           await updateDoc(doc(db, 'users', auth.currentUser.uid), { balance: newBal });
+        } catch(e) { console.error("Balance sync failed", e); }
+      }
+    }
+
+    // Math for multipliers
+    function calculateMultiplier(mines, gemsRevealed) {
+      // Simplified Stake-like math based on combinations
+      let prob = 1.0;
+      for (let i = 0; i < gemsRevealed; i++) {
+        prob *= (25 - mines - i) / (25 - i);
+      }
+      // House edge ~ 1%
+      return (0.99 / prob);
+    }
+
+    let isAutoMode = false;
+    let isAutoRunning = false;
+    let autoTiles = new Set();
+    
+    // Tabs Logic
+    document.getElementById('tab-manual').addEventListener('click', () => {
+      if(isAutoRunning) return;
+      isAutoMode = false;
+      document.getElementById('tab-manual').classList.add('active');
+      document.getElementById('tab-auto').classList.remove('active');
+      document.getElementById('auto-instructions').style.display = 'none';
+      document.getElementById('auto-settings').style.display = 'none';
+      playBtn.textContent = 'Bet';
+      playBtn.style.background = 'var(--brand-green)';
+      autoTiles.clear();
+      Array.from(gridEl.children).forEach(t => {
+        t.className = 'mine-tile';
+        t.innerHTML = '';
+        t.style.opacity = '1';
+      });
+    });
+    
+    document.getElementById('tab-auto').addEventListener('click', () => {
+      if (isPlaying) return;
+      isAutoMode = true;
+      document.getElementById('tab-auto').classList.add('active');
+      document.getElementById('tab-manual').classList.remove('active');
+      document.getElementById('auto-instructions').style.display = 'block';
+      document.getElementById('auto-settings').style.display = 'flex';
+      playBtn.textContent = 'Start Auto';
+      playBtn.style.background = 'var(--brand-green)';
+      
+      // Clean board so they can pick easily
+      Array.from(gridEl.children).forEach(t => {
+        t.className = 'mine-tile';
+        if(autoTiles.has(parseInt(t.dataset.index))) t.classList.add('auto-selected');
+        t.innerHTML = '';
+        t.style.opacity = '1';
+      });
+    });
+
+    playBtn.addEventListener('click', async () => {
+      if (!auth.currentUser) return window.showCustomAlert("Error", "Log in to play!");
+      if (!auth.currentUser.emailVerified) return window.showCustomAlert("Error", "Verify email to play!");
+      
+      const bet = parseFloat(document.getElementById('bet-input').value);
+      if (isNaN(bet) || bet <= 0) return window.showCustomAlert("Error", "Invalid bet!");
+      
+      let mCount = parseInt(document.getElementById('mines-count').value);
+      if (isNaN(mCount) || mCount < 1 || mCount > 24) {
+         return window.showCustomAlert("Error", "Mines must be between 1 and 24.");
+      }
+
+      if (isAutoMode) {
+        if (isAutoRunning) {
+          isAutoRunning = false;
+          playBtn.textContent = 'Start Auto';
+          playBtn.style.background = 'var(--brand-green)';
+          return;
+        }
+        if (autoTiles.size === 0) return window.showCustomAlert("Error", "Select at least 1 tile for Auto mode!");
+        if (autoTiles.size > (25 - mCount)) return window.showCustomAlert("Error", "Selected more tiles than available gems!");
+        
+        isAutoRunning = true;
+        playBtn.textContent = 'Stop Auto';
+        playBtn.style.background = '#ef4444';
+        
+        runAutoLoop(bet, mCount);
+        return;
+      }
+
+      if (bet > userBalance) return window.showCustomAlert("Error", "Insufficient balance!");
+
+      startGame(bet, mCount);
+    });
+
+    function startGame(bet, mCount) {
+      userBalance -= bet;
+      balAmount.textContent = userBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      updateFirestoreBalance(userBalance);
+
+      document.getElementById('win-popup').classList.remove('active');
+
+      currentBet = bet;
+      totalMines = mCount;
+      revealedGems = 0;
+      currentMultiplier = 1.0;
+      isPlaying = true;
+      
+      if (!isAutoMode) {
+        playBtn.style.display = 'none';
+        cashoutBtn.style.display = 'block';
+      }
+      multDisplay.textContent = '1.00x';
+      
+      document.getElementById('bet-input').disabled = true;
+      document.getElementById('mines-count').disabled = true;
+
+      // Generate Board
+      grid = Array(25).fill('gem');
+      let minesPlaced = 0;
+      while(minesPlaced < totalMines) {
+        let r = Math.floor(Math.random() * 25);
+        if (grid[r] === 'gem') {
+          grid[r] = 'mine';
+          minesPlaced++;
+        }
+      }
+
+      // Reset UI Grid
+      Array.from(gridEl.children).forEach((tile, i) => {
+        tile.className = 'mine-tile'; 
+        if (isAutoMode && autoTiles.has(i)) {
+          tile.classList.add('auto-selected');
+        }
+        tile.style.opacity = '1';
+        tile.innerHTML = '';
+      });
+    }
+
+    async function runAutoLoop(initialBet, mCount) {
+      let currentAutoBet = initialBet;
+      let sessionProfit = 0;
+      
+      const incWin = parseFloat(document.getElementById('auto-inc-win').value) || 0;
+      const incLoss = parseFloat(document.getElementById('auto-inc-loss').value) || 0;
+      const stopProfit = parseFloat(document.getElementById('auto-stop-profit').value) || 0;
+      const stopLoss = parseFloat(document.getElementById('auto-stop-loss').value) || 0;
+
+      while (isAutoRunning) {
+        if (currentAutoBet > userBalance) {
+          window.showCustomAlert("Auto Stopped", "Insufficient balance for next bet.");
+          isAutoRunning = false;
+          break;
+        }
+        
+        startGame(currentAutoBet, mCount);
+        sessionProfit -= currentAutoBet; // Deduct bet from session profit
+        
+        await new Promise(r => setTimeout(r, 100)); // slight pause before reveal
+        
+        let hitMine = false;
+        
+        // Reveal pattern
+        for (let idx of autoTiles) {
+          if (!isAutoRunning) break;
+          const tile = gridEl.children[idx];
+          
+          if (grid[idx] === 'mine') {
+            tile.classList.add('revealed', 'mine');
+            tile.innerHTML = '💣';
+            hitMine = true;
+            break;
+          } else {
+            tile.classList.add('revealed', 'gem');
+            tile.innerHTML = '💎';
+            revealedGems++;
+            currentMultiplier = calculateMultiplier(totalMines, revealedGems);
+            multDisplay.textContent = currentMultiplier.toFixed(2) + 'x';
+          }
+          await new Promise(r => setTimeout(r, 150)); // speed of opening
+        }
+        
+        if (!isAutoRunning) break;
+
+        if (hitMine) {
+          endGame(false);
+          
+          if (stopLoss > 0 && sessionProfit <= -stopLoss) {
+             window.showCustomAlert("Auto Stopped", `Stop on Loss reached. (${sessionProfit.toFixed(2)}$)`);
+             isAutoRunning = false;
+             break;
+          }
+          if (incLoss > 0) currentAutoBet += currentAutoBet * (incLoss / 100);
+          else currentAutoBet = initialBet;
+          
+          document.getElementById('bet-input').value = currentAutoBet.toFixed(2);
+          
+          await new Promise(r => setTimeout(r, 1000));
+        } else {
+          handleCashout();
+          const winAmount = currentAutoBet * currentMultiplier;
+          sessionProfit += winAmount;
+          
+          if (stopProfit > 0 && sessionProfit >= stopProfit) {
+             window.showCustomAlert("Auto Stopped", `Stop on Profit reached! (+${sessionProfit.toFixed(2)}$)`);
+             isAutoRunning = false;
+             break;
+          }
+          if (incWin > 0) currentAutoBet += currentAutoBet * (incWin / 100);
+          else currentAutoBet = initialBet;
+          
+          document.getElementById('bet-input').value = currentAutoBet.toFixed(2);
+          
+          await new Promise(r => setTimeout(r, 1000));
+        }
+      }
+      
+      isAutoRunning = false;
+      playBtn.textContent = 'Start Auto';
+      playBtn.style.background = 'var(--brand-green)';
+      document.getElementById('bet-input').disabled = false;
+      document.getElementById('mines-count').disabled = false;
+      document.getElementById('bet-input').value = initialBet.toFixed(2);
+    }
+
+    function handleTileClick(index, tile) {
+      if (isAutoMode && !isAutoRunning && !isPlaying) {
+        if (autoTiles.has(index)) {
+          autoTiles.delete(index);
+          tile.classList.remove('auto-selected');
+        } else {
+          autoTiles.add(index);
+          tile.className = 'mine-tile auto-selected'; // force clean state
+          tile.innerHTML = '';
+          tile.style.opacity = '1';
+        }
+        return;
+      }
+
+      if (!isPlaying || tile.classList.contains('revealed')) return;
+
+      const type = grid[index];
+      tile.classList.add('revealed', type);
+      
+      if (type === 'mine') {
+        // BOOM - LOSE
+        tile.innerHTML = '💣';
+        endGame(false);
+      } else {
+        // GEM - WIN
+        tile.innerHTML = '💎';
+        revealedGems++;
+        currentMultiplier = calculateMultiplier(totalMines, revealedGems);
+        multDisplay.textContent = currentMultiplier.toFixed(2) + 'x';
+        cashoutBtn.textContent = `Cashout $${(currentBet * currentMultiplier).toFixed(2)}`;
+        
+        // Auto cashout if max gems found
+        if (revealedGems === 25 - totalMines) {
+          handleCashout();
+        }
+      }
+    }
+
+    cashoutBtn.addEventListener('click', handleCashout);
+
+    function handleCashout() {
+      if (!isPlaying) return;
+      const winAmount = currentBet * currentMultiplier;
+      userBalance += winAmount;
+      balAmount.textContent = userBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      updateFirestoreBalance(userBalance);
+      
+      document.getElementById('win-amount-text').textContent = `$${winAmount.toFixed(2)}`;
+      document.getElementById('win-multiplier-text').textContent = `${currentMultiplier.toFixed(2)}x Multiplier`;
+      document.getElementById('win-popup').classList.add('active');
+      
+      if (winAmount > userHighestWin && auth.currentUser) {
+        userHighestWin = winAmount;
+        updateDoc(doc(db, 'users', auth.currentUser.uid), { highestWin: userHighestWin });
+      }
+      
+      endGame(true);
+    }
+
+    function endGame(won) {
+      isPlaying = false;
+      
+      if (!isAutoMode) {
+        playBtn.style.display = 'block';
+        cashoutBtn.style.display = 'none';
+        cashoutBtn.textContent = 'Cashout';
+      }
+      
+      if (!isAutoRunning) {
+        document.getElementById('bet-input').disabled = false;
+        document.getElementById('mines-count').disabled = false;
+      }
+
+      if (!won && auth.currentUser) {
+        const potentialLoss = currentBet * currentMultiplier;
+        if (potentialLoss > userHighestLoss) {
+          userHighestLoss = potentialLoss;
+          updateDoc(doc(db, 'users', auth.currentUser.uid), { highestLoss: userHighestLoss });
+        }
+      }
+
+      // Reveal all remaining mines/gems
+      Array.from(gridEl.children).forEach((tile, i) => {
+        tile.classList.add('disabled');
+        if (!tile.classList.contains('revealed')) {
+          if (grid[i] === 'mine') {
+            tile.classList.add('revealed', 'mine');
+            tile.style.opacity = '0.5';
+            tile.innerHTML = '💣';
+          } else if (won) {
+            tile.classList.add('revealed', 'gem');
+            tile.style.opacity = '0.3';
+            tile.innerHTML = '💎';
+          }
+        }
+      });
+    }
+    // Close popup on click anywhere
+    document.addEventListener('click', (e) => {
+      const popup = document.getElementById('win-popup');
+      if (popup && popup.classList.contains('active') && e.target !== cashoutBtn) {
+        popup.classList.remove('active');
+      }
+    });
+
+    // VIP Shop Logic
+    document.getElementById('btn-buy-vip').addEventListener('click', async () => {
+      if (!auth.currentUser) return window.showCustomAlert("Error", "Log in to purchase!");
+      if (userBalance < 1000000) return window.showCustomAlert("Insufficient Funds", "You need at least $1,000,000 to buy this key!");
+      
+      window.showCustomConfirm("Confirm Purchase", "Are you sure you want to spend $1,000,000 on the PullZFish Permanent Key?", async () => {
+        userBalance -= 1000000;
+        balAmount.textContent = userBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        
+        const code = `PZ-FISH-${auth.currentUser.uid.substring(0,5).toUpperCase()}-${Math.floor(Math.random()*9000)+1000}`;
+        
+        await updateDoc(doc(db, 'users', auth.currentUser.uid), { 
+          balance: userBalance,
+          purchasedKey: code
+        });
+        
+        document.getElementById('shop-box').innerHTML = `
+          <h3 style="color: #10b981; margin: 0 0 0.5rem 0;">Unlocked!</h3>
+          <p style="font-size: 0.9rem; color: #d1d5db; margin-bottom: 1rem;">PullZFish Permanent Key</p>
+          <div style="background: rgba(0,0,0,0.5); padding: 0.5rem; border-radius: 6px; font-family: monospace; color: #f59e0b; font-size: 1.1rem; letter-spacing: 1px;">${code}</div>
+          <p style="font-size: 0.8rem; color: #9ca3af; margin-top: 1rem;">Send this code to an Owner on Discord to claim!</p>
+        `;
+        
+        window.showCustomAlert("Purchase Successful!", `You bought the VIP key! Your code is ${code}. Send it to an admin on Discord.`);
+        loadLeaderboard(); // refresh leaderboard
+      });
+    });
+
+    let leaderboardUnsubscribe = null;
+    function loadLeaderboard() {
+      const listEl = document.getElementById('leaderboard-list');
+      const q = query(collection(db, 'users'), orderBy('balance', 'desc'), limit(15));
+      
+      if (leaderboardUnsubscribe) leaderboardUnsubscribe();
+      
+      leaderboardUnsubscribe = onSnapshot(q, (snap) => {
+        listEl.innerHTML = '';
+        let rank = 1;
+        
+        snap.forEach(docSnap => {
+          const data = docSnap.data();
+          const bal = data.balance !== undefined ? data.balance : 0;
+          let name = data.username || "Anonymous";
+          let avatar = data.avatarBase64 || `https://ui-avatars.com/api/?name=${name}&background=06b6d4&color=fff`;
+          let role = data.role || "Member";
+          let hWin = data.highestWin || 0;
+          let hLoss = data.highestLoss || 0;
+          
+          let roleBadge = '';
+          if (role === 'Owner') roleBadge = `<span style="background: #ef4444; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: bold; margin-left: 5px;">OWNER</span>`;
+          else if (role === 'Admin') roleBadge = `<span style="background: #f59e0b; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: bold; margin-left: 5px;">ADMIN</span>`;
+          else if (role === 'VIP') roleBadge = `<span style="background: #8b5cf6; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: bold; margin-left: 5px;">VIP</span>`;
+
+          let rankColor = 'rgba(255,255,255,0.2)';
+          if (rank === 1) rankColor = '#fbbf24'; // Gold
+          else if (rank === 2) rankColor = '#94a3b8'; // Silver
+          else if (rank === 3) rankColor = '#b45309'; // Bronze
+
+          listEl.insertAdjacentHTML('beforeend', `
+            <div class="leaderboard-item" style="flex-direction: column; align-items: flex-start; gap: 0.5rem; padding: 1rem; position: relative;">
+              
+              <!-- Row 1: User Info -->
+              <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                <div style="display: flex; align-items: center; gap: 0.6rem; flex: 1; min-width: 0;">
+                  <img src="${avatar}" alt="Avatar" style="width: 26px; height: 26px; flex-shrink: 0; border-radius: 50%;">
+                  <span style="font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 1rem;">${name}</span>
+                  <span style="flex-shrink: 0;">${roleBadge}</span>
+                </div>
+                <div style="font-weight: 900; color: ${rankColor}; font-size: 1.2rem; font-style: italic; margin-left: 0.5rem; flex-shrink: 0;">#${rank}</div>
+              </div>
+              
+              <!-- Row 2: Balance -->
+              <div class="leaderboard-bal" style="font-size: 1.15rem; color: #10b981; font-weight: bold; width: 100%; padding-left: 2.2rem; letter-spacing: 0.5px;">
+                $${bal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+              </div>
+              
+              <!-- Row 3: Stats (Two Lines) -->
+              <div style="display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.75rem; color: #9ca3af; width: 100%; margin-top: 0.2rem; padding: 0.5rem; background: rgba(0,0,0,0.15); border-radius: 6px; border: 1px solid rgba(255,255,255,0.02);">
+                <div>Highest Win: <span style="color: #10b981;">$${hWin.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span></div>
+                <div>Max Loss: <span style="color: #ef4444;">$${hLoss.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span></div>
+              </div>
+            </div>
+          `);
+          rank++;
+        });
+      }, (e) => {
+        console.error("Leaderboard error", e);
+        listEl.innerHTML = `<div style="text-align: center; color: #ef4444; font-size: 0.9rem;">Failed to load.</div>`;
+      });
+    }
+    
+    // Load leaderboard on start
+    loadLeaderboard();
+  </script>
+</body>
+</html>

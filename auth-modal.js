@@ -3,6 +3,26 @@ import { auth, db, createUserWithEmailAndPassword, signInWithEmailAndPassword, s
 // 1. Inject CSS for Modal and Navbar Button
 const style = document.createElement('style');
 style.textContent = `
+  .custom-alert-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
+    display: flex; justify-content: center; align-items: center;
+    opacity: 0; pointer-events: none; transition: 0.3s; z-index: 10000;
+  }
+  .custom-alert-overlay.active { opacity: 1; pointer-events: all; }
+  .custom-alert-box {
+    background: #111827; border: 1px solid rgba(6, 182, 212, 0.3);
+    padding: 2.5rem; border-radius: 16px; width: 90%; max-width: 400px;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); text-align: center;
+    transform: translateY(20px); transition: 0.3s;
+  }
+  .custom-alert-overlay.active .custom-alert-box { transform: translateY(0); }
+  .custom-alert-btn {
+    background: var(--brand-cyan); color: black; font-weight: bold; border: none;
+    padding: 0.8rem; border-radius: 8px; cursor: pointer; transition: 0.3s; font-size: 1rem; width: 100%;
+  }
+  .custom-alert-btn:hover { background: #0891b2; }
+  
   .auth-modal-overlay {
     position: fixed; top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(0,0,0,0.7);
@@ -273,29 +293,112 @@ registerForm.addEventListener('submit', async (e) => {
 // 4. Global Auth State & UI Synchronization
 let currentUser = null;
 
+function injectGlobalModals() {
+  // 1. Inject Auth Modal
+  if (!document.getElementById('auth-modal-overlay')) {
+    document.body.appendChild(overlay);
+  }
+  
+  // 2. Inject Custom Alert Modal
+  if (!document.getElementById('custom-alert-overlay')) {
+    const alertOverlay = document.createElement('div');
+    alertOverlay.id = 'custom-alert-overlay';
+    alertOverlay.className = 'custom-alert-overlay';
+    alertOverlay.innerHTML = `
+      <div class="custom-alert-box">
+        <h2 id="custom-alert-title" style="margin-top: 0; color: white;">Notice</h2>
+        <p id="custom-alert-message" style="color: var(--text-muted); margin-bottom: 2rem;"></p>
+        <button class="custom-alert-btn" id="custom-alert-btn">OK</button>
+      </div>
+    `;
+    document.body.appendChild(alertOverlay);
+    
+    document.getElementById('custom-alert-btn').addEventListener('click', () => {
+      alertOverlay.classList.remove('active');
+    });
+  }
+
+  // 3. Inject Custom Confirm Modal
+  if (!document.getElementById('custom-confirm-overlay')) {
+    const confirmOverlay = document.createElement('div');
+    confirmOverlay.id = 'custom-confirm-overlay';
+    confirmOverlay.className = 'custom-alert-overlay';
+    confirmOverlay.innerHTML = `
+      <div class="custom-alert-box">
+        <h2 id="custom-confirm-title" style="margin-top: 0; color: white;">Confirm</h2>
+        <p id="custom-confirm-message" style="color: var(--text-muted); margin-bottom: 2rem;"></p>
+        <div style="display: flex; gap: 1rem;">
+          <button class="custom-alert-btn" id="custom-confirm-cancel" style="background: #374151; color: white;">Cancel</button>
+          <button class="custom-alert-btn" id="custom-confirm-ok">Yes</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(confirmOverlay);
+    
+    document.getElementById('custom-confirm-cancel').addEventListener('click', () => {
+      confirmOverlay.classList.remove('active');
+    });
+  }
+}
+
+window.showCustomAlert = function(title, message) {
+  const alertOverlay = document.getElementById('custom-alert-overlay');
+  if (alertOverlay) {
+    document.getElementById('custom-alert-title').textContent = title;
+    document.getElementById('custom-alert-message').textContent = message;
+    alertOverlay.classList.add('active');
+  } else {
+    alert(title + "\\n" + message);
+  }
+}
+
+window.showCustomConfirm = function(title, message, onConfirm) {
+  const overlay = document.getElementById('custom-confirm-overlay');
+  if (overlay) {
+    document.getElementById('custom-confirm-title').textContent = title;
+    document.getElementById('custom-confirm-message').textContent = message;
+    
+    const okBtn = document.getElementById('custom-confirm-ok');
+    const newOkBtn = okBtn.cloneNode(true);
+    okBtn.parentNode.replaceChild(newOkBtn, okBtn);
+    
+    newOkBtn.addEventListener('click', () => {
+      overlay.classList.remove('active');
+      if(onConfirm) onConfirm();
+    });
+    
+    overlay.classList.add('active');
+  } else {
+    if (confirm(title + "\n" + message)) onConfirm();
+  }
+}
 function injectNavUserArea() {
   const brand = document.querySelector('.brand');
   const navLinks = document.querySelector('.nav-links');
 
   if (navLinks && !document.getElementById('nav-community')) {
     navLinks.insertAdjacentHTML('beforeend', '<a href="community.html" id="nav-community">Community</a>');
+    navLinks.insertAdjacentHTML('beforeend', '<a href="mines.html" id="nav-mines" style="color: #f59e0b; font-weight: bold;">Mines 💣</a>');
   }
 
   if (brand && !document.getElementById('nav-user-area')) {
     const userArea = document.createElement('div');
     userArea.id = 'nav-user-area';
     userArea.className = 'nav-user-profile';
-    userArea.innerHTML = `<button class="button button-ghost button-small" id="nav-login-btn" style="border-color: var(--brand-cyan); color: var(--brand-cyan); margin-left: 1rem;">Log In / Sign Up</button>`;
+    userArea.innerHTML = ``; // Leave empty until auth state is known
     brand.parentNode.insertBefore(userArea, brand.nextSibling);
 
-    document.getElementById('nav-login-btn').addEventListener('click', showAuthModal);
   }
 }
 
 // Since module scripts are deferred, the DOM might already be loaded
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', injectNavUserArea);
+  document.addEventListener('DOMContentLoaded', () => {
+    injectGlobalModals();
+    injectNavUserArea();
+  });
 } else {
+  injectGlobalModals();
   injectNavUserArea();
 }
 
@@ -337,9 +440,7 @@ onAuthStateChanged(auth, async (user) => {
             <img src="${avatarSrc}" alt="Avatar" style="width: 24px; height: 24px; border-radius: 50%; margin-right: 8px; object-fit: cover; border: 1px solid var(--brand-cyan);">
             ${displayName}
           </a>
-          <button class="btn-logout" id="nav-logout-btn">Log Out</button>
         `;
-        document.getElementById('nav-logout-btn').addEventListener('click', () => signOut(auth));
       }
     } else {
       if (userArea) {
@@ -382,10 +483,26 @@ export function handleSecureClick(e) {
 
   if (!currentUser) {
     showAuthModal();
-  } else if (!currentUser.emailVerified) {
-    alert('Please verify your email address to download! Check your inbox.');
-    showAuthModal();
-  } else {
-    window.open(targetUrl, '_blank');
+    return;
   }
+  
+  if (!currentUser.emailVerified) {
+    currentUser.reload().then(() => {
+      if (currentUser.emailVerified) {
+        window.open(targetUrl, '_blank');
+        window.location.reload();
+      } else {
+        if (window.showCustomAlert) {
+          window.showCustomAlert("Verification Required", "Please verify your email address to download! Check your inbox or SPAM folder.");
+        } else {
+          alert("Please verify your email address to download! Check your inbox or SPAM folder.");
+        }
+        showAuthModal();
+        sendEmailVerification(currentUser).catch(()=>console.log("Rate limited"));
+      }
+    });
+    return;
+  }
+
+  window.open(targetUrl, '_blank');
 }

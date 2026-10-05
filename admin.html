@@ -162,6 +162,14 @@
           <option value="Owner">Owner</option>
         </select>
       </div>
+      <div class="edit-input-group" id="edit-balance-group" style="display: none;">
+        <label style="color: #f59e0b;">Balance ($) [OWNER ONLY]</label>
+        <input type="number" id="edit-balance" step="0.01">
+      </div>
+      <div class="edit-input-group" id="edit-owner-actions-group" style="display: none; margin-top: 1rem; gap: 0.5rem; flex-direction: column;">
+        <button class="action-btn btn-warn" id="edit-reset-vip-btn" style="width: 100%; font-size: 0.8rem; display: none;">Reset VIP Key</button>
+        <button class="action-btn btn-danger" id="edit-reset-stats-btn" style="width: 100%; font-size: 0.8rem;">Reset Win/Loss Stats</button>
+      </div>
       <div class="edit-input-group" title="Firebase blocks direct password changes on client side.">
         <label>Password</label>
         <input type="password" disabled value="********" title="Security Restricted (Backend Required)">
@@ -179,7 +187,7 @@
 
   <script type="module" src="auth-modal.js"></script>
   <script type="module">
-    import { auth, db, doc, getDoc, getDocs, setDoc, updateDoc, collection, onAuthStateChanged } from './firebase-config.js';
+    import { auth, db, doc, getDoc, getDocs, setDoc, updateDoc, collection, onAuthStateChanged, onSnapshot } from './firebase-config.js';
 
     let viewerRole = null;
 
@@ -189,55 +197,44 @@
         return;
       }
       
-      const snap = await getDoc(doc(db, 'users', user.uid));
-      if (snap.exists()) {
-        const data = snap.data();
-        viewerRole = data.role;
-        
-        if (viewerRole !== 'Owner' && viewerRole !== 'Admin') {
-          alert("Access Denied! You do not have administrative privileges.");
-          window.location.href = 'index.html';
-          return;
-        }
-
-        document.getElementById('admin-viewer').innerHTML = `Logged in as: <span class="role-badge role-${viewerRole}">${viewerRole}</span> ${data.username}`;
-        loadUsers();
-      } else {
-        // Auto-migration for legacy users
-        let usernameStr = prompt("Database requires an update. Please enter your username (e.g. pullzcheats):");
-        if (usernameStr) {
-          try {
-            await setDoc(doc(db, 'users', user.uid), {
-              username: usernameStr.toLowerCase(),
-              email: user.email,
-              role: usernameStr.toLowerCase() === 'pullzcheats' ? 'Owner' : 'Member',
-              isMuted: false,
-              isBanned: false,
-              hasChangedUsername: false,
-              createdAt: new Date().toISOString()
-            });
-            window.location.reload();
-          } catch(e) {
-            alert("Update Error: " + e.message);
+      const userRef = doc(db, 'users', user.uid);
+      
+      onSnapshot(userRef, (snap) => {
+        if (snap.exists()) {
+          const data = snap.data();
+          viewerRole = data.role;
+          
+          if (viewerRole !== 'Owner' && viewerRole !== 'Admin') {
+            alert("Access Denied! You do not have administrative privileges.");
+            window.location.href = 'index.html';
+            return;
+          }
+  
+          document.getElementById('admin-viewer').innerHTML = `Logged in as: <span class="role-badge role-${viewerRole}">${viewerRole}</span> ${data.username}`;
+          if (!window.usersLoaded) {
+            window.usersLoaded = true;
+            loadUsers();
           }
         }
-      }
+      });
     });
 
     window.usersData = {};
+    let usersUnsubscribe = null;
 
-    async function loadUsers() {
+    function loadUsers() {
       const tbody = document.getElementById('users-body');
-      tbody.innerHTML = '';
+      if (usersUnsubscribe) usersUnsubscribe();
       
-      const querySnapshot = await getDocs(collection(db, 'users'));
-      window.usersData = {};
-      
-      querySnapshot.forEach((docSnap) => {
-        const user = docSnap.data();
-        const uid = docSnap.id;
-        window.usersData[uid] = user;
-        const role = user.role || 'Member';
+      usersUnsubscribe = onSnapshot(collection(db, 'users'), (querySnapshot) => {
+        tbody.innerHTML = '';
+        window.usersData = {};
+        
+        querySnapshot.forEach((docSnap) => {
+          const user = docSnap.data();
+          const uid = docSnap.id;
+          window.usersData[uid] = user;
+          const role = user.role || 'Member';
         
         let avatar = `https://ui-avatars.com/api/?name=${user.username}&background=06b6d4&color=fff`;
         if (user.avatarBase64) avatar = user.avatarBase64;
@@ -251,7 +248,7 @@
         
         // Build Action Buttons
         let actionsHtml = '';
-        if (role !== 'Owner') {
+        if (role !== 'Owner' || viewerRole === 'Owner') {
           actionsHtml = `<button class="action-btn" onclick="window.openEditModal('${uid}')">Edit User</button>`;
         } else {
           actionsHtml = '<span style="color:var(--text-muted); font-size: 0.8rem;">Supreme Overlord</span>';
@@ -270,10 +267,13 @@
           <td>${actionsHtml}</td>
         `;
         tbody.appendChild(tr);
+        });
+      
+        document.getElementById('loading-users').style.display = 'none';
+        document.getElementById('users-table').style.display = 'table';
+      }, (e) => {
+        console.error("Admin real-time error: ", e);
       });
-
-      document.getElementById('loading-users').style.display = 'none';
-      document.getElementById('users-table').style.display = 'table';
     }
 
     // Expose functions to window for onclick
@@ -285,6 +285,47 @@
       document.getElementById('edit-username').value = user.username;
       document.getElementById('edit-avatar').value = user.avatarBase64 || '';
       document.getElementById('edit-role').value = user.role || 'Member';
+      
+      if (viewerRole === 'Owner') {
+        document.getElementById('edit-balance-group').style.display = 'block';
+        document.getElementById('edit-balance').value = user.balance !== undefined ? user.balance : 0;
+        
+        document.getElementById('edit-owner-actions-group').style.display = 'flex';
+        
+        const resetVipBtn = document.getElementById('edit-reset-vip-btn');
+        if (user.purchasedKey) {
+          resetVipBtn.style.display = 'block';
+          resetVipBtn.onclick = async () => {
+            const { doc, updateDoc } = await import('./firebase-config.js');
+            await updateDoc(doc(db, 'users', uid), { purchasedKey: null });
+            if (window.showCustomAlert) window.showCustomAlert("Success", "VIP Key has been reset!");
+            else alert("VIP Key Reset!");
+            resetVipBtn.style.display = 'none';
+            user.purchasedKey = null;
+          };
+        } else {
+          resetVipBtn.style.display = 'none';
+        }
+        
+        const resetStatsBtn = document.getElementById('edit-reset-stats-btn');
+        resetStatsBtn.onclick = async () => {
+          let confirmed = false;
+          if (window.showCustomConfirm) {
+            confirmed = await window.showCustomConfirm("Are you sure?", "This will reset highestWin and highestLoss to $0.00.");
+          } else {
+            confirmed = confirm("Reset highestWin and highestLoss to $0.00?");
+          }
+          
+          if (confirmed) {
+            await updateDoc(doc(db, 'users', uid), { highestWin: 0, highestLoss: 0 });
+            if (window.showCustomAlert) window.showCustomAlert("Success", "Stats reset to $0.00!");
+            else alert("Stats reset to $0.00!");
+          }
+        };
+      } else {
+        document.getElementById('edit-balance-group').style.display = 'none';
+        document.getElementById('edit-owner-actions-group').style.display = 'none';
+      }
       
       const muteBtn = document.getElementById('edit-mute-btn');
       if (user.isMuted) {
@@ -322,6 +363,13 @@
       if (newRole !== oldUser.role) updates.role = newRole;
       if (newAvatar !== (oldUser.avatarBase64 || '')) updates.avatarBase64 = newAvatar;
       if (newAvatar === '') updates.avatarBase64 = null;
+      
+      if (viewerRole === 'Owner') {
+        const newBal = parseFloat(document.getElementById('edit-balance').value);
+        if (!isNaN(newBal) && newBal !== oldUser.balance) {
+          updates.balance = newBal;
+        }
+      }
       
       try {
         if (newUsername !== oldUser.username) {
