@@ -346,6 +346,19 @@ onAuthStateChanged(auth, async (user) => {
         userArea.innerHTML = `<button class="button button-ghost button-small" id="nav-login-btn" style="border-color: #f59e0b; color: #f59e0b;">Verify Email</button>`;
         document.getElementById('nav-login-btn').addEventListener('click', showAuthModal);
       }
+      
+      // Real-time polling for email verification
+      if (!window.verificationPoller) {
+        window.verificationPoller = setInterval(async () => {
+          if (auth.currentUser && !auth.currentUser.emailVerified) {
+            await auth.currentUser.reload();
+            if (auth.currentUser.emailVerified) {
+              clearInterval(window.verificationPoller);
+              window.location.reload();
+            }
+          }
+        }, 3000); // Check every 3 seconds
+      }
     }
   } else {
     if (userArea) {
