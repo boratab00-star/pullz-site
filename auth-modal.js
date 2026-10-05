@@ -176,7 +176,7 @@ loginForm.addEventListener('submit', async (e) => {
   const email = document.getElementById('login-email').value;
   const pass = document.getElementById('login-password').value;
   const errBox = document.getElementById('login-error');
-  
+
   try {
     errBox.style.display = 'none';
     const userCred = await signInWithEmailAndPassword(auth, email, pass);
@@ -186,7 +186,7 @@ loginForm.addEventListener('submit', async (e) => {
     } else {
       hideAuthModal();
     }
-  } catch(err) {
+  } catch (err) {
     console.error("Login Error:", err);
     if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
       errBox.textContent = "Incorrect email or password! If you just registered, make sure no error occurred.";
@@ -205,7 +205,7 @@ registerForm.addEventListener('submit', async (e) => {
   const pass = document.getElementById('reg-password').value;
   const errBox = document.getElementById('register-error');
   const succBox = document.getElementById('register-success');
-  
+
   errBox.style.display = 'none';
   succBox.style.display = 'none';
 
@@ -219,7 +219,7 @@ registerForm.addEventListener('submit', async (e) => {
     errBox.style.display = 'block';
     return;
   }
-  
+
   const userCaptcha = parseInt(document.getElementById('reg-captcha').value);
   if (userCaptcha !== expectedCaptchaAnswer) {
     errBox.textContent = "Anti-Bot: Incorrect math answer!";
@@ -238,11 +238,11 @@ registerForm.addEventListener('submit', async (e) => {
     }
     const userCred = await createUserWithEmailAndPassword(auth, email, pass);
     await setDoc(userRef, { email: email, uid: userCred.user.uid, createdAt: new Date().toISOString() });
-    
+
     // Assign Owner role automatically to pullzcheats
     let assignedRole = "Member";
     if (username === "pullzcheats") assignedRole = "Owner";
-    
+
     // Also save a user doc for profile management
     await setDoc(doc(db, 'users', userCred.user.uid), {
       username: username,
@@ -259,9 +259,9 @@ registerForm.addEventListener('submit', async (e) => {
     succBox.textContent = "Account successfully created! Please check your email (including SPAM folder) for the activation link.";
     succBox.style.display = 'block';
     registerForm.reset();
-  } catch(err) {
+  } catch (err) {
     console.error("Register Error:", err);
-    if(err.code === 'auth/email-already-in-use') {
+    if (err.code === 'auth/email-already-in-use') {
       errBox.textContent = "This email is already in use!";
     } else {
       errBox.textContent = "Error during registration: " + err.message;
@@ -285,9 +285,10 @@ function injectNavUserArea() {
     const userArea = document.createElement('div');
     userArea.id = 'nav-user-area';
     userArea.className = 'nav-user-profile';
-    userArea.style.marginLeft = '1rem';
-    userArea.innerHTML = ``; // Start empty to prevent FOUC flicker
+    userArea.innerHTML = `<button class="button button-ghost button-small" id="nav-login-btn" style="border-color: var(--brand-cyan); color: var(--brand-cyan); margin-left: 1rem;">Log In / Sign Up</button>`;
     brand.parentNode.insertBefore(userArea, brand.nextSibling);
+
+    document.getElementById('nav-login-btn').addEventListener('click', showAuthModal);
   }
 }
 
@@ -301,7 +302,7 @@ if (document.readyState === 'loading') {
 onAuthStateChanged(auth, async (user) => {
   currentUser = user;
   const userArea = document.getElementById('nav-user-area');
-  
+
   if (user) {
     if (user.emailVerified) {
       hideAuthModal();
@@ -309,7 +310,7 @@ onAuthStateChanged(auth, async (user) => {
         // Fetch user doc for username and avatar
         let displayName = user.email.split('@')[0];
         let avatarSrc = `https://ui-avatars.com/api/?name=${displayName}&background=06b6d4&color=fff&size=150`;
-        
+
         let role = "Member";
         try {
           const snap = await getDoc(doc(db, 'users', user.uid));
@@ -328,7 +329,7 @@ onAuthStateChanged(auth, async (user) => {
 
         const navLinks = document.querySelector('.nav-links');
         if ((role === 'Owner' || role === 'Admin') && navLinks && !document.getElementById('nav-admin')) {
-           navLinks.insertAdjacentHTML('beforeend', '<a href="admin.html" id="nav-admin" style="color: #ef4444; font-weight: bold;">⚙️ Control Panel</a>');
+          navLinks.insertAdjacentHTML('beforeend', '<a href="admin.html" id="nav-admin" style="color: #ef4444; font-weight: bold;">⚙️ Control Panel</a>');
         }
 
         userArea.innerHTML = `
@@ -351,7 +352,7 @@ onAuthStateChanged(auth, async (user) => {
       userArea.innerHTML = `<button class="button button-ghost button-small" id="nav-login-btn" style="border-color: var(--brand-cyan); color: var(--brand-cyan);">Log In / Sign Up</button>`;
       document.getElementById('nav-login-btn').addEventListener('click', showAuthModal);
     }
-    
+
     // Auto show modal on index.html once per session
     if (window.location.pathname.includes('index.html') || window.location.pathname === '/' || window.location.pathname.endsWith('/')) {
       if (!sessionStorage.getItem('modalShown')) {
@@ -365,7 +366,7 @@ onAuthStateChanged(auth, async (user) => {
 export function handleSecureClick(e) {
   e.preventDefault();
   const targetUrl = e.currentTarget.href;
-  
+
   if (!currentUser) {
     showAuthModal();
   } else if (!currentUser.emailVerified) {

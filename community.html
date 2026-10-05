@@ -273,6 +273,7 @@
         
         usersList.forEach(user => {
           if(user.isBanned) return;
+          if(user.emailVerified === false) return; // Hide unverified accounts
           validMembersCount++;
 
           const role = user.role || 'Member';
