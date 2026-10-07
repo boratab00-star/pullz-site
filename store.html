@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#030712" />
+  <meta name="description" content="PullZ Store - Purchase premium automation scripts." />
+  <title>Store | PullZ Automation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=3">
+  <style>
+    .store-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    @media (min-width: 768px) {
+      .store-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    @media (min-width: 1100px) {
+      .store-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    .product-card {
+      background: rgba(17, 24, 39, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      padding: 2rem;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    
+    .product-card:hover {
+      transform: translateY(-15px);
+    }
+
+    /* Colors for cards */
+    .card-free { border-color: rgba(156, 163, 175, 0.3); }
+    .card-free:hover { box-shadow: 0 20px 50px rgba(156, 163, 175, 0.15); border-color: rgba(156, 163, 175, 0.6); }
+    .card-free::before { background: linear-gradient(90deg, #6b7280, #9ca3af); }
+    .card-free .product-card-topbar { background: linear-gradient(90deg, #6b7280, #9ca3af); }
+
+    .card-weekly { border-color: rgba(14, 165, 233, 0.3); }
+    .card-weekly:hover { box-shadow: 0 20px 50px rgba(14, 165, 233, 0.2); border-color: rgba(14, 165, 233, 0.8); }
+    .card-weekly::before { background: linear-gradient(90deg, #0284c7, #38bdf8); }
+    
+    .card-monthly { border-color: rgba(245, 158, 11, 0.3); }
+    .card-monthly:hover { box-shadow: 0 20px 50px rgba(245, 158, 11, 0.2); border-color: rgba(245, 158, 11, 0.8); }
+    .card-monthly::before { background: linear-gradient(90deg, #d97706, #fbbf24); }
+
+    .card-lifetime { border-color: rgba(168, 85, 247, 0.3); }
+    .card-lifetime:hover { box-shadow: 0 20px 50px rgba(168, 85, 247, 0.2); border-color: rgba(168, 85, 247, 0.8); }
+    .card-lifetime::before { background: linear-gradient(90deg, #9333ea, #d8b4fe); }
+
+    .card-weekly .product-card-topbar { background: linear-gradient(90deg, #0284c7, #38bdf8); }
+    .card-monthly .product-card-topbar { background: linear-gradient(90deg, #d97706, #fbbf24); }
+    .card-lifetime .product-card-topbar { background: linear-gradient(90deg, #9333ea, #d8b4fe); }
+
+    .product-badge {
+      position: absolute;
+      top: 1rem; right: 1rem;
+      background: rgba(16, 185, 129, 0.2);
+      color: #10b981;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      border: 1px solid #10b981;
+      text-transform: uppercase;
+    }
+
+    .product-price {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: var(--text-base);
+      margin: 1rem 0;
+      display: flex;
+      align-items:baseline;
+      gap: 0.25rem;
+    }
+
+    .product-price span {
+      font-size: 1rem;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .product-features {
+      list-style: none;
+      padding: 0;
+      margin: 1.5rem 0;
+      flex: 1;
+    }
+
+    .product-features li {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    .product-features li svg {
+      width: 18px; height: 18px;
+      fill: var(--brand-cyan);
+      flex-shrink: 0;
+    }
+
+    /* Stripe Mockup Styling */
+    .stripe-checkout-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.8);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      backdrop-filter: blur(5px);
+    }
+
+    .stripe-box {
+      background: #ffffff;
+      width: 100%;
+      max-width: 400px;
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      color: #1a1f36;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      animation: modalPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    
+    @keyframes modalPop {
+      from { transform: scale(0.9); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .stripe-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .stripe-header h3 {
+      margin: 0;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #1a1f36;
+    }
+
+    .stripe-close {
+      cursor: pointer;
+      color: #a3acb9;
+      font-size: 1.5rem;
+      line-height: 1;
+    }
+    .stripe-close:hover { color: #1a1f36; }
+
+    .StripeElement {
+      box-sizing: border-box;
+      height: 40px;
+      padding: 10px 12px;
+      border: 1px solid #e6ebf1;
+      border-radius: 6px;
+      background-color: white;
+      box-shadow: 0 1px 3px 0 #e6ebf1;
+      -webkit-transition: box-shadow 150ms ease;
+      transition: box-shadow 150ms ease;
+      margin-bottom: 1rem;
+      font-size: 16px;
+    }
+    
+    .StripeElement:focus {
+      outline: none;
+      border-color: #0074d4;
+      box-shadow: 0 1px 3px 0 #e6ebf1, 0 0 0 1px #0074d4;
+    }
+
+    .stripe-btn {
+      width: 100%;
+      background: #0074d4;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .stripe-btn:hover {
+      background: #005bb5;
+    }
+
+    .stripe-btn:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    .stripe-powered {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0.3rem;
+      margin-top: 1rem;
+      color: #8792a2;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+    
+    .stripe-powered svg {
+      height: 20px;
+      fill: #8792a2;
+    }
+  </style>
+  <link href="https://cdn.sell.app/embed/style.css" rel="stylesheet" />
+</head>
+
+<body>
+  <div class="bg-animated">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+  </div>
+
+  <header class="site-header">
+    <nav class="nav shell" aria-label="Primary navigation">
+      <a class="brand" href="index.html">
+        <span class="brand-mark">◆</span>
+        <span><strong>PULLZ</strong> Hub</span>
+      </a>
+
+                  <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="index.html#games">Games</a>
+      </div>
+      </div>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="section" style="padding-top: 8rem; min-height: 80vh;">
+      <div class="shell">
+        <div class="section-heading-centered reveal">
+          <p class="eyebrow">Official Store</p>
+          <h2>Premium Access</h2>
+          <p>Get a permanent license key to unlock our advanced automation tools.</p>
+        </div>
+        <div class="category-header reveal" style="margin-bottom: 2rem; display: flex; align-items: center; gap: 1rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem;">
+          <div style="font-size: 2.5rem; filter: drop-shadow(0 0 10px rgba(6, 182, 212, 0.5));">🎣</div>
+          <div>
+            <h3 style="margin: 0; font-size: 1.5rem; letter-spacing: 0.5px;">Pixel Worlds Scripts</h3>
+            <p style="margin: 0.2rem 0 0 0; color: var(--text-muted); font-size: 0.95rem;">Premium automation and fishing tools for Pixel Worlds.</p>
+          </div>
+        </div>
+
+        <div class="important-notice reveal" style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.3); border-left: 4px solid #ef4444; border-radius: 12px; padding: 1.5rem; margin-bottom: 2.5rem; display: flex; gap: 1rem; align-items: flex-start; box-shadow: 0 0 20px rgba(239, 68, 68, 0.1);">
+          <div style="background: rgba(239, 68, 68, 0.15); padding: 0.5rem; border-radius: 8px; color: #ef4444; flex-shrink: 0;">
+            <svg viewBox="0 0 24 24" style="width: 28px; height: 28px; fill: currentColor;"><path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 16h2v2h-2zm0-6h2v4h-2z"/></svg>
+          </div>
+          <div>
+            <h4 style="margin: 0 0 0.5rem 0; color: #ef4444; font-size: 1.1rem; letter-spacing: 0.5px; text-transform: uppercase;">⚠️ CRITICAL: Email Matching Required</h4>
+            <p style="margin: 0; color: #fca5a5; font-size: 0.95rem; line-height: 1.5;">To automatically receive your key on your profile, you <strong>MUST</strong> use the exact same email address at checkout that you used to register your account on this website. Keys are strictly bound to accounts.</p>
+          </div>
+        </div>
+
+        <div class="store-grid reveal">
+          
+          <!-- Product Card: 1 Day (Free) -->
+          <div class="product-card card-free">
+            <div class="product-card-topbar" style="position:absolute; top:0; left:0; right:0; height:4px; z-index:1;"></div>
+            <div class="product-badge" style="background: rgba(156, 163, 175, 0.2); color: #9ca3af; border-color: #9ca3af;">BASIC</div>
+            <h3 style="font-size: 1.8rem; margin: 0; color: white;">PullZFish</h3>
+            <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 0.5rem;">1-Day License Key</p>
+            
+            <div class="product-price" style="color: #d1d5db;">
+              $0.00 <span style="color: rgba(255,255,255,0.4);">/ free</span>
+            </div>
+            
+            <ul class="product-features">
+              <li>
+                <svg viewBox="0 0 24 24" style="fill: #9ca3af;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                1 Day Basic Access
+              </li>
+              <li>
+                <svg viewBox="0 0 24 24" style="fill: #9ca3af;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                Watch 3 Ads to Unlock
+              </li>
+              <li>
+                <svg viewBox="0 0 24 24" style="fill: #9ca3af;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                1 Hour Wait Time
+              </li>
+            </ul>
+            
+            <a href="https://linkvertise.com/7429410/XIue1YxN42EV" target="_blank" rel="noopener noreferrer" class="button button-ghost" style="width: 100%; justify-content: center; padding: 1rem; border-color: #6b7280; color: #9ca3af; margin-top: auto; display: flex;">
+              <svg style="width: 20px; height: 20px; fill: #9ca3af; margin-right: 0.5rem;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+              Get Free Key
+            </a>
+          </div>
+
+          <!-- Product Card: 7 Days -->
+          <div class="product-card card-weekly">
+            <div class="product-card-topbar" style="position:absolute; top:0; left:0; right:0; height:4px; z-index:1;"></div>
+            <div class="product-badge" style="background: rgba(14, 165, 233, 0.2); color: #0ea5e9; border-color: #0ea5e9;">WEEKLY</div>
+            <h3 style="font-size: 1.8rem; margin: 0; color: white;">PullZFish</h3>
+            <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 0.5rem;">7-Day License Key</p>
+            
+            <div class="product-price" style="color: #38bdf8;">
+              $1.99 <span style="color: rgba(255,255,255,0.4);">/ week</span>
+            </div>
+            
+            <div style="margin-top: 0.5rem; font-size: 0.85rem; color: #10b981; font-weight: bold; display: flex; align-items: center; gap: 0.3rem;">
+              <span class="live-dot" style="width: 8px; height: 8px; background: #10b981; border-radius: 50%; display: inline-block; animation: pulseGlow 2s infinite;"></span>
+              <span id="stock-weekly">Loading stock...</span>
+            </div>
+            
+            <ul class="product-features">
+              <li>
+                <svg viewBox="0 0 24 24" style="fill: #0ea5e9;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                7 Days Premium Access
+              </li>
+              <li>
+                <svg viewBox="0 0 24 24" style="fill: #0ea5e9;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                Undetected & Auto-Updates
+              </li>
+              <li>
+                <svg viewBox="0 0 24 24" style="fill: #0ea5e9;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                Standard Support
+              </li>
+            </ul>
+            
+            <button class="button button-primary" style="width: 100%; justify-content: center; padding: 1rem; background: #0ea5e9; color: white;" data-sell-store="84519" data-sell-product="384760" data-sell-theme="" data-sell-darkmode="true">
+              <svg style="width: 20px; height: 20px; fill: white; margin-right: 0.5rem;" viewBox="0 0 24 24"><path d="M17 18c-1.11 0-2 .89-2 2s.89 2 2 2 2-.89 2-2-.89-2-2-2zm-9 0c-1.11 0-2 .89-2 2s.89 2 2 2 2-.89 2-2-.89-2-2-2zm6-3H7.81c-.53 0-1.04-.3-1.28-.78L4.16 8.5C3.89 7.93 4.3 7.25 4.95 7.25H20.6c.46 0 .82.39.73.84l-1.6 7.42c-.2.93-1.03 1.49-1.93 1.49zM5.21 4H2.5v2h2.07l3.6 7.59-1.35 2.44C6.18 17.18 7.01 19 8.5 19h12v-2H8.5l1.1-2h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.58-1.05-.18-2.48-1.38-2.48H6.54L5.21 4z"/></svg>
+              Purchase Now
+            </button>
+          </div>
+
+          <!-- Product Card: 30 Days -->
+          <div class="product-card card-monthly">
+            <div class="product-card-topbar" style="position:absolute; top:0; left:0; right:0; height:4px; z-index:1;"></div>
+            <div class="product-badge" style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; border-color: #f59e0b;">MONTHLY</div>
+            <h3 style="font-size: 1.8rem; margin: 0; color: white;">PullZFish</h3>
+            <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 0.5rem;">30-Day License Key</p>
+            
+            <div class="product-price" style="color: #fbbf24;">
+              $4.99 <span style="color: rgba(255,255,255,0.4);">/ month</span>
+            </div>
+            
+            <div style="margin-top: 0.5rem; font-size: 0.85rem; color: #10b981; font-weight: bold; display: flex; align-items: center; gap: 0.3rem;">
+              <span class="live-dot" style="width: 8px; height: 8px; background: #10b981; border-radius: 50%; display: inline-block; animation: pulseGlow 2s infinite;"></span>
+              <span id="stock-monthly">Loading stock...</span>
+            </div>
+            
+            <ul class="product-features">
+              <li>
+                <svg viewBox="0 0 24 24" style="fill: #f59e0b;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                30 Days Premium Access
+              </li>
+              <li>
+                <svg viewBox="0 0 24 24" style="fill: #f59e0b;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                Undetected & Auto-Updates
+              </li>
+              <li>
+                <svg viewBox="0 0 24 24" style="fill: #f59e0b;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                Priority Discord Support
+              </li>
+            </ul>
+            
+            <button class="button button-primary" style="width: 100%; justify-content: center; padding: 1rem; background: #f59e0b; color: #000;" data-sell-store="84519" data-sell-product="384762" data-sell-theme="" data-sell-darkmode="true">
+              <svg style="width: 20px; height: 20px; fill: #000; margin-right: 0.5rem;" viewBox="0 0 24 24"><path d="M17 18c-1.11 0-2 .89-2 2s.89 2 2 2 2-.89 2-2-.89-2-2-2zm-9 0c-1.11 0-2 .89-2 2s.89 2 2 2 2-.89 2-2-.89-2-2-2zm6-3H7.81c-.53 0-1.04-.3-1.28-.78L4.16 8.5C3.89 7.93 4.3 7.25 4.95 7.25H20.6c.46 0 .82.39.73.84l-1.6 7.42c-.2.93-1.03 1.49-1.93 1.49zM5.21 4H2.5v2h2.07l3.6 7.59-1.35 2.44C6.18 17.18 7.01 19 8.5 19h12v-2H8.5l1.1-2h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.58-1.05-.18-2.48-1.38-2.48H6.54L5.21 4z"/></svg>
+              Purchase Now
+            </button>
+          </div>
+          
+          <!-- Product Card: Lifetime -->
+          <div class="product-card card-lifetime" style="transform-origin: center;">
+            <div class="product-card-topbar" style="position:absolute; top:0; left:0; right:0; height:4px; z-index:1;"></div>
+            <div class="product-badge" style="background: rgba(168, 85, 247, 0.2); color: #c084fc; border-color: #c084fc;">LIFETIME</div>
+            <h3 style="font-size: 1.8rem; margin: 0; color: white;">PullZFish</h3>
+            <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 0.5rem;">Permanent License Key</p>
+            
+            <div class="product-price" style="color: #d8b4fe;">
+              $19.99 <span style="color: rgba(255,255,255,0.4);">/ one-time</span>
+            </div>
+            
+            <div style="margin-top: 0.5rem; font-size: 0.85rem; color: #10b981; font-weight: bold; display: flex; align-items: center; gap: 0.3rem;">
+              <span class="live-dot" style="width: 8px; height: 8px; background: #10b981; border-radius: 50%; display: inline-block; animation: pulseGlow 2s infinite;"></span>
+              <span id="stock-lifetime">Loading stock...</span>
+            </div>
+            
+            <ul class="product-features">
+              <li>
+                <svg viewBox="0 0 24 24" style="fill: #a855f7;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                Permanent Premium Access
+              </li>
+              <li>
+                <svg viewBox="0 0 24 24" style="fill: #a855f7;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                Undetected & Auto-Updates
+              </li>
+              <li>
+                <svg viewBox="0 0 24 24" style="fill: #a855f7;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                24/7 VIP Support
+              </li>
+            </ul>
+            
+            <button class="button button-primary" style="width: 100%; justify-content: center; padding: 1rem; background: #a855f7; color: white; border-color: #a855f7;" data-sell-store="84519" data-sell-product="384764" data-sell-theme="" data-sell-darkmode="true">
+              <svg style="width: 20px; height: 20px; fill: white; margin-right: 0.5rem;" viewBox="0 0 24 24"><path d="M17 18c-1.11 0-2 .89-2 2s.89 2 2 2 2-.89 2-2-.89-2-2-2zm-9 0c-1.11 0-2 .89-2 2s.89 2 2 2 2-.89 2-2-.89-2-2-2zm6-3H7.81c-.53 0-1.04-.3-1.28-.78L4.16 8.5C3.89 7.93 4.3 7.25 4.95 7.25H20.6c.46 0 .82.39.73.84l-1.6 7.42c-.2.93-1.03 1.49-1.93 1.49zM5.21 4H2.5v2h2.07l3.6 7.59-1.35 2.44C6.18 17.18 7.01 19 8.5 19h12v-2H8.5l1.1-2h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.58-1.05-.18-2.48-1.38-2.48H6.54L5.21 4z"/></svg>
+              Purchase Now
+            </button>
+          </div>
+          
+          <!-- Discord / Support Info -->
+          <div style="grid-column: 1 / -1; display: flex; flex-direction: column; justify-content: center; align-items: center; margin-top: 1rem;">
+            <div style="background: rgba(0,0,0,0.3); border-radius: 16px; padding: 2rem; border: 1px dashed rgba(255,255,255,0.1);">
+              <h3 style="margin-top: 0;">How it works</h3>
+              <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6;">
+                1. Click <strong>Purchase Now</strong> and complete payment securely via PayPal or Crypto.<br><br>
+                2. Your permanent license key will instantly appear in your <strong>Profile Dashboard</strong>.<br><br>
+                3. Download the script and inject it using your new key.<br><br>
+                <em>Need help? Join our Discord server and open a ticket.</em>
+              </p>
+              <a href="https://discord.com/invite/WnH4xm5fXB" class="button button-discord button-small" style="margin-top: 1rem; display: inline-flex;">
+                Join Support Server
+              </a>
+            </div>
+          </div>
+          
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Sell.app Embed Script -->
+  <script type="module" src="auth-modal.js?v=6"></script>
+  <script src="https://cdn.sell.app/embed/script.js" type="module"></script>
+  <script type="module">
+    import { db, collection, query, where, onSnapshot } from './firebase-config.js';
+    
+    const stockRef = collection(db, 'stock_keys');
+    
+    // Weekly
+    onSnapshot(query(stockRef, where('type', '==', '7-day'), where('available', '==', true)), (snap) => {
+      const el = document.getElementById('stock-weekly');
+      if (el) el.innerText = `${snap.size} keys available`;
+    });
+    
+    // Monthly
+    onSnapshot(query(stockRef, where('type', '==', '30-day'), where('available', '==', true)), (snap) => {
+      const el = document.getElementById('stock-monthly');
+      if (el) el.innerText = `${snap.size} keys available`;
+    });
+    
+    // Lifetime
+    onSnapshot(query(stockRef, where('type', '==', 'lifetime'), where('available', '==', true)), (snap) => {
+      const el = document.getElementById('stock-lifetime');
+      if (el) el.innerText = `${snap.size} keys available`;
+    });
+  </script>
+</body>
+</html>

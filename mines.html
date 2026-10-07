@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>PULLZ Hub | Mines</title>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=3">
   <style>
     .mines-section {
       padding: 8rem 0 4rem;
@@ -194,8 +194,9 @@
         <span class="brand-mark">◆</span>
         <span><strong>PULLZ</strong> Hub</span>
       </a>
-      <div class="nav-links">
+                  <div class="nav-links">
         <a href="index.html">Home</a>
+        <a href="index.html#games">Games</a>
       </div>
     </nav>
   </header>
@@ -302,7 +303,7 @@
     </div>
   </main>
 
-  <script type="module" src="auth-modal.js?v=2"></script>
+  <script type="module" src="auth-modal.js?v=6"></script>
   <script type="module">
     import { auth, db, doc, getDoc, setDoc, updateDoc, onAuthStateChanged, collection, query, orderBy, limit, getDocs, onSnapshot } from './firebase-config.js';
 

@@ -616,3 +616,8 @@ p {
   margin-top: auto;
   padding-top: 1.5rem;
 }
+
+/* Smooth Page Transitions */
+body { opacity: 0; animation: fadeInPage 0.4s ease-out forwards; }
+@keyframes fadeInPage { from { opacity: 0; } to { opacity: 1; } }
+body.fade-out { opacity: 0; transition: opacity 0.3s ease; }

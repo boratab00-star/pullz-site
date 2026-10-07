@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>PULLZ Hub | Profile</title>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=3">
   <style>
     /* Profile specific styles */
     .profile-section { padding: 8rem 0 4rem; }
@@ -80,6 +80,156 @@
     }
     .status-msg.error { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
     .status-msg.success { background: rgba(16, 185, 129, 0.1); color: var(--brand-green); }
+    
+    /* Key Display Styles */
+    .my-keys-container { margin-bottom: 2rem; text-align: left; }
+    .my-key-card {
+      border-radius: 16px; padding: 1.5rem; margin-bottom: 0 !important;
+      position: relative; overflow: hidden;
+      display: flex; flex-direction: column; justify-content: space-between;
+      aspect-ratio: 1.586 / 1; max-width: none !important; margin-left: 0 !important; margin-right: 0 !important;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      color: white; border: 1px solid rgba(255,255,255,0.2);
+      transition: transform 0.3s ease;
+      z-index: 2;
+    }
+    
+    .my-key-card::after {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 50%);
+      pointer-events: none;
+    }
+
+
+    .my-key-card.type-7-day { 
+      background: linear-gradient(135deg, #0284c7, #0ea5e9); 
+      box-shadow: 0 10px 20px rgba(14, 165, 233, 0.3);
+      border: 1px solid rgba(14, 165, 233, 0.5);
+    }
+    
+    /* 7-Day Laser Scan */
+    .my-key-card.type-7-day::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 100%;
+      background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.3) 50%, transparent);
+      animation: scan-line 4s infinite linear; pointer-events: none; z-index: 1; opacity: 0.5;
+    }
+    @keyframes scan-line { 0% { transform: translateY(-100%); } 100% { transform: translateY(100%); } }
+
+    .my-key-card.type-30-day { 
+      background: linear-gradient(135deg, #b45309, #f59e0b); 
+      animation: pulse-orange 3s infinite;
+      border: 1px solid rgba(245, 158, 11, 0.8);
+    }
+    
+    /* 30-Day Barber Pole Stripes */
+    .my-key-card.type-30-day::before {
+      content: ''; position: absolute; top: -50%; left: -50%; right: -50%; bottom: -50%;
+      background: repeating-linear-gradient(45deg, transparent, transparent 15px, rgba(255,255,255,0.05) 15px, rgba(255,255,255,0.05) 30px);
+      animation: barber-pole 10s infinite linear; pointer-events: none; z-index: 1;
+    }
+    @keyframes barber-pole { 0% { transform: translateY(0); } 100% { transform: translateY(42px); } }
+
+    .my-key-card.type-lifetime { 
+      background: linear-gradient(135deg, #6b21a8, #c084fc, #6b21a8); 
+      background-size: 200% 200%;
+      animation: pulse-purple 2s infinite, border-dance 5s infinite ease-in-out;
+      border: 2px solid rgba(216, 180, 254, 0.9);
+    }
+    
+    /* Lifetime Shimmer Effect */
+    .my-key-card.type-lifetime::before {
+      content: ''; position: absolute; top: 0; left: -150%; width: 50%; height: 100%;
+      background: linear-gradient(to right, transparent, rgba(255,255,255,0.4), transparent);
+      transform: skewX(-25deg); animation: shimmer 4s infinite; pointer-events: none; z-index: 1;
+    }
+    
+    /* Lifetime Holographic Hover */
+    .my-key-card.type-lifetime:hover::after {
+      background: linear-gradient(135deg, rgba(255,0,0,0.2), rgba(0,255,0,0.2), rgba(0,0,255,0.2));
+      mix-blend-mode: color-dodge; animation: rainbow-shift 2s infinite linear;
+    }
+    @keyframes rainbow-shift { 0% { filter: hue-rotate(0deg); } 100% { filter: hue-rotate(360deg); } }
+    
+    @keyframes shimmer { 0%, 50% { left: -150%; } 100% { left: 150%; } }
+    @keyframes pulse-orange {
+      0%, 100% { box-shadow: 0 10px 20px rgba(245, 158, 11, 0.4), inset 0 0 10px rgba(245, 158, 11, 0.1); }
+      50% { box-shadow: 0 10px 40px rgba(245, 158, 11, 0.8), inset 0 0 20px rgba(245, 158, 11, 0.4); }
+    }
+    @keyframes pulse-purple {
+      0%, 100% { box-shadow: 0 10px 25px rgba(168, 85, 247, 0.5), inset 0 0 15px rgba(168, 85, 247, 0.2); }
+      50% { box-shadow: 0 10px 50px rgba(168, 85, 247, 1), inset 0 0 30px rgba(168, 85, 247, 0.6); }
+    }
+    @keyframes border-dance { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+    .my-key-card.expired { background: linear-gradient(135deg, #374151, #4b5563) !important; filter: grayscale(1); }
+    
+    .card-chip { width: 45px; height: 35px; background: rgba(255,255,255,0.8); border-radius: 6px; margin-bottom: auto; position: relative; overflow: hidden; }
+    .card-chip::after { content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: rgba(0,0,0,0.2); }
+    .card-chip::before { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: rgba(0,0,0,0.2); }
+    
+    .key-value { font-family: 'Courier New', Courier, monospace; font-size: 1.3rem; letter-spacing: 2px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); margin: 1rem 0; text-align: center; }
+    
+    .card-bottom { display: flex; justify-content: space-between; align-items: flex-end; }
+    
+    .card-label { font-size: 0.6rem; text-transform: uppercase; opacity: 0.7; margin-bottom: 0.1rem; }
+    .card-value { font-size: 0.9rem; font-weight: bold; text-transform: uppercase; }
+    
+    .btn-copy-key {
+      background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.3);
+      color: white; padding: 0.4rem 1rem; border-radius: 6px; cursor: pointer;
+      font-size: 0.8rem; font-weight: bold; backdrop-filter: blur(5px);
+      transition: 0.3s; z-index: 2;
+    }
+    .btn-copy-key:hover { background: rgba(0,0,0,0.6); }
+    
+    .swipe-container {
+      position: relative; overflow: hidden; margin-bottom: 1.5rem;
+      border-radius: 16px; max-width: 380px; margin-left: auto; margin-right: auto;
+      transition: transform 0.3s ease;
+    }
+    .swipe-container:hover:not(:has(.swiped)) {
+      transform: translateY(-5px) scale(1.02);
+      z-index: 5;
+    }
+    .swipe-delete-bg {
+      position: absolute; right: 0; top: 0; bottom: 0; width: 100px;
+      background: #ef4444; display: flex; align-items: center; justify-content: center;
+      border-radius: 16px; z-index: 0;
+    }
+    .swipe-delete-btn {
+      background: transparent; border: none; color: white; cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; font-weight: bold;
+    }
+    .swipe-arrow {
+      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+      cursor: pointer; z-index: 10; opacity: 0.5; transition: transform 0.3s ease, opacity 0.3s ease, background 0.3s ease;
+      background: rgba(0,0,0,0.3); border-radius: 50%; padding: 5px; display: flex;
+    }
+    .swipe-arrow:hover { opacity: 1; background: rgba(0,0,0,0.5); }
+    .swiped { transform: translateX(-100px); }
+    .swiped .swipe-arrow { transform: translateY(-50%) rotate(180deg); }
+    
+    /* Custom Modal */
+    .custom-modal-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
+      display: none; align-items: center; justify-content: center; z-index: 9999;
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .custom-modal {
+      background: #111827; border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px; padding: 2rem; max-width: 400px; width: 90%;
+      text-align: center; transform: scale(0.9); transition: transform 0.3s;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    }
+    .custom-modal-overlay.active { opacity: 1; }
+    .custom-modal-overlay.active .custom-modal { transform: scale(1); }
+    
+    .modal-buttons { display: flex; gap: 1rem; margin-top: 1.5rem; }
+    .modal-btn { flex: 1; padding: 0.8rem; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; border: none; }
+    .btn-cancel { background: rgba(255,255,255,0.1); color: white; }
+    .btn-cancel:hover { background: rgba(255,255,255,0.2); }
+    .btn-confirm { background: #ef4444; color: white; }
+    .btn-confirm:hover { background: #dc2626; }
   </style>
 </head>
 <body>
@@ -94,8 +244,9 @@
         <span class="brand-mark">◆</span>
         <span><strong>PULLZ</strong> Hub</span>
       </a>
-      <div class="nav-links">
+                  <div class="nav-links">
         <a href="index.html">Home</a>
+        <a href="index.html#games">Games</a>
       </div>
     </nav>
   </header>
@@ -111,6 +262,16 @@
       </div>
       <h2 class="profile-name" id="display-username">Loading...</h2>
       <p class="profile-email" id="display-email">Loading...</p>
+
+      <div class="profile-divider"></div>
+
+      <!-- My Active Licenses -->
+      <div class="my-keys-container">
+        <h3 style="margin-bottom: 1rem; font-size: 1.4rem;">🗝️ My Active Licenses</h3>
+        <div id="keys-list">
+          <div style="text-align: center; color: var(--text-muted); font-size: 0.95rem; padding: 1rem 0;">Loading keys...</div>
+        </div>
+      </div>
 
       <div class="profile-divider"></div>
 
@@ -166,7 +327,22 @@
     </div>
   </footer>
 
-  <script type="module" src="auth-modal.js"></script>
+  <!-- Custom Delete Modal -->
+  <div class="custom-modal-overlay" id="delete-modal">
+    <div class="custom-modal">
+      <div style="width: 50px; height: 50px; background: rgba(239, 68, 68, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+        <svg viewBox="0 0 24 24" style="width: 24px; height: 24px; fill: #ef4444;"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+      </div>
+      <h3 style="color: white; margin-bottom: 0.5rem; font-size: 1.4rem;">Delete Key</h3>
+      <p style="color: var(--text-muted); font-size: 0.95rem;">Are you sure you want to permanently delete this key? This action cannot be undone.</p>
+      <div class="modal-buttons">
+        <button class="modal-btn btn-cancel" onclick="window.closeDeleteModal()">Cancel</button>
+        <button class="modal-btn btn-confirm" id="confirm-delete-btn">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="auth-modal.js?v=6"></script>
   <script type="module">
     import { auth, db, doc, getDoc, setDoc, updatePassword, reauthenticateWithCredential, EmailAuthProvider, onAuthStateChanged, signOut } from './firebase-config.js';
     import { deleteDoc } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js';
@@ -197,11 +373,13 @@
       
       // Fetch user data
       const userRef = doc(db, 'users', user.uid);
-      const snap = await getDoc(userRef);
+      const userSnap = await getDoc(userRef);
+      let accountUsername = "MEMBER";
       
-      if (snap.exists()) {
-        currentUserDoc = snap.data();
+      if (userSnap.exists()) {
+        currentUserDoc = userSnap.data();
         currentUsername = currentUserDoc.username;
+        accountUsername = currentUsername;
         document.getElementById('display-username').textContent = '@' + currentUsername;
         let avatarSrc = `https://ui-avatars.com/api/?name=${currentUsername}&background=06b6d4&color=fff&size=150`;
         if (currentUserDoc.avatarBase64) {
@@ -217,8 +395,133 @@
           btnUsername.textContent = 'Change Locked';
         }
       } else {
-        // Fallback for very first accounts where we didn't store the username locally on profile
         document.getElementById('display-username').textContent = user.email.split('@')[0];
+        accountUsername = user.email.split('@')[0];
+      }
+      
+      // Fetch user's keys (supports both short UID and full Make.com path)
+      const { collection, query, where, onSnapshot } = await import('./firebase-config.js');
+      const makePath = `projects/site-3842a/databases/(default)/documents/users/${user.uid}`;
+      const keysQuery = query(collection(db, 'stock_keys'), where('ownerUid', 'in', [user.uid, user.email, makePath]));
+      onSnapshot(keysQuery, (snap) => {
+        const keysListEl = document.getElementById('keys-list');
+        if (snap.empty) {
+          keysListEl.innerHTML = `
+            <div style="text-align: center; background: rgba(0,0,0,0.3); border: 1px dashed rgba(255,255,255,0.1); border-radius: 12px; padding: 2rem;">
+              <p style="color: var(--text-muted); margin-bottom: 1rem;">You don't have any active licenses yet.</p>
+              <a href="store.html" class="button button-primary button-small">Visit Store</a>
+            </div>
+          `;
+          return;
+        }
+        
+          keysListEl.innerHTML = '';
+          snap.forEach(docSnap => {
+            const keyData = docSnap.data();
+            let typeLabel = "Unknown";
+            if (keyData.type === '7-day') typeLabel = "7-Day Key";
+            if (keyData.type === '30-day') typeLabel = "30-Day Key";
+            if (keyData.type === 'lifetime') typeLabel = "Lifetime Key";
+            
+            let isExpired = false;
+            let expiryText = "PERMANENT";
+            
+            if (keyData.expiresAt) {
+              const now = Date.now();
+              if (now > keyData.expiresAt) {
+                isExpired = true;
+                expiryText = "EXPIRED";
+              } else {
+                const date = new Date(keyData.expiresAt);
+                expiryText = `${(date.getMonth()+1).toString().padStart(2,'0')}/${date.getFullYear().toString().slice(-2)}`;
+              }
+            }
+            
+            // Format key exactly as it is in DB
+            const formattedKey = keyData.key;
+            
+            keysListEl.innerHTML += `
+              <div class="swipe-container">
+                <div class="swipe-delete-bg">
+                  <button class="swipe-delete-btn" onclick="window.deleteKey('${keyData.key}')">
+                    <svg viewBox="0 0 24 24" style="width: 24px; height: 24px; fill: white; margin-bottom: 0.3rem;"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                    Delete
+                  </button>
+                </div>
+                <div class="my-key-card type-${keyData.type} ${isExpired ? 'expired' : ''}" id="card-${keyData.key}">
+                  <div class="swipe-arrow" onclick="window.toggleSwipe('${keyData.key}')" title="Swipe to Delete">
+                    <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: white;"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/></svg>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; width: 100%;">
+                    <div class="card-chip"></div>
+                    <div style="font-weight: 800; font-style: italic; opacity: 0.8; font-size: 1.2rem;">PullZFish</div>
+                  </div>
+                  
+                  <div class="key-value" style="font-size: 1.1rem; letter-spacing: 1px;">${formattedKey}</div>
+                  
+                  <div class="card-bottom">
+                    <div>
+                      <div class="card-label">Cardholder Name</div>
+                      <div class="card-value" style="letter-spacing: 1px;">${accountUsername}</div>
+                    </div>
+                    <div style="text-align: right;">
+                      <div class="card-label">Plan Type</div>
+                      <div class="card-value">${typeLabel}</div>
+                    </div>
+                    <div>
+                      <button class="btn-copy-key" onclick="navigator.clipboard.writeText('${keyData.key}'); this.textContent='Copied!'; setTimeout(()=>this.textContent='Copy', 2000);">Copy</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `;
+          });
+      });
+
+    });
+
+    window.toggleSwipe = (key) => {
+      document.getElementById('card-' + key).classList.toggle('swiped');
+    };
+
+    let keyToDelete = null;
+    
+    window.deleteKey = (key) => {
+      keyToDelete = key;
+      const modal = document.getElementById('delete-modal');
+      modal.style.display = 'flex';
+      // tiny delay to allow display:flex to apply before adding opacity class
+      setTimeout(() => modal.classList.add('active'), 10);
+    };
+    
+    window.closeDeleteModal = () => {
+      const modal = document.getElementById('delete-modal');
+      modal.classList.remove('active');
+      setTimeout(() => { modal.style.display = 'none'; }, 300);
+      keyToDelete = null;
+    };
+    
+    document.getElementById('confirm-delete-btn').addEventListener('click', async () => {
+      if (!keyToDelete) return;
+      const btn = document.getElementById('confirm-delete-btn');
+      const originalText = btn.textContent;
+      btn.textContent = 'Deleting...';
+      btn.disabled = true;
+      
+      try {
+        const { query, where, getDocs, collection } = await import('./firebase-config.js');
+        const q = query(collection(db, 'stock_keys'), where('key', '==', keyToDelete));
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+          const { deleteDoc } = await import('https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js');
+          await deleteDoc(snap.docs[0].ref);
+        }
+        window.closeDeleteModal();
+      } catch (err) {
+        alert("Error deleting key: " + err.message);
+      } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
       }
     });
 

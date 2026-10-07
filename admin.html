@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>PULLZ Hub | Control Panel</title>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=3">
   <style>
     .admin-section { padding: 8rem 0 4rem; }
     .admin-container {
@@ -106,17 +106,21 @@
         <span class="brand-mark" style="color: #ef4444;">◆</span>
         <span><strong>PULLZ</strong> Control</span>
       </a>
-      <div class="nav-links">
+                  <div class="nav-links">
         <a href="index.html">Home</a>
+        <a href="index.html#games">Games</a>
       </div>
     </nav>
   </header>
 
   <main class="admin-section shell">
     <div class="admin-container">
-      <div class="admin-header">
-        <h2>System Administration</h2>
-        <span id="admin-viewer">Loading...</span>
+      <div class="admin-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h2>System Administration</h2>
+          <span id="admin-viewer">Loading...</span>
+        </div>
+        <button class="action-btn" onclick="document.getElementById('vault-modal').style.display='flex'" style="background: #a855f7; color: white; border: none; padding: 0.6rem 1.2rem; cursor: pointer; border-radius: 6px; font-weight: bold; font-family: 'Inter', sans-serif;">🗝️ Key Vault</button>
       </div>
 
       <div id="loading-users">Fetching user database...</div>
@@ -135,6 +139,27 @@
           <!-- Populated by JS -->
         </tbody>
       </table>
+
+      <div style="margin-top: 3rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="margin: 0; color: #38bdf8;">Recent Orders (Sell.app)</h2>
+      </div>
+      <div style="overflow-y: auto; max-height: 400px; background: rgba(0,0,0,0.4); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); padding: 1rem;">
+        <table class="users-table" id="orders-table" style="margin: 0;">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Customer Email</th>
+              <th>Product</th>
+              <th>Status</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody id="orders-tbody">
+            <tr><td colspan="5" style="text-align:center; padding: 2rem; color: #9ca3af;">Loading orders...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
     </div>
   </main>
 
@@ -176,6 +201,27 @@
         <span style="font-size: 0.7rem; color: var(--text-muted);">Restricted by Firebase Security</span>
       </div>
       
+      <!-- User Keys Section (Owner Only) -->
+      <div id="edit-user-keys-section" style="border: 1px solid rgba(14, 165, 233, 0.3); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; background: rgba(14, 165, 233, 0.05); display: none;">
+        <label style="color: #38bdf8; font-weight: bold; font-size: 0.9rem; margin-bottom: 0.5rem; display: block;">🔑 Owned Keys</label>
+        <div id="user-keys-list" style="display: flex; flex-direction: column; gap: 0.5rem;">
+          <span style="color: #9ca3af; font-size: 0.85rem;">Loading keys...</span>
+        </div>
+      </div>
+
+      <!-- Give Key Section -->
+      <div style="border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; background: rgba(168, 85, 247, 0.05);">
+        <label style="color: #c084fc; font-weight: bold; font-size: 0.9rem; margin-bottom: 0.5rem; display: block;">🗝️ Give License Key</label>
+        <div style="display: flex; gap: 0.5rem;">
+          <select id="give-key-type" style="flex: 1; padding: 0.5rem; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: white;">
+            <option value="7-day">Weekly (7-Day)</option>
+            <option value="30-day">Monthly (30-Day)</option>
+            <option value="lifetime">Lifetime</option>
+          </select>
+          <button class="action-btn" onclick="window.giveKeyToUser()" style="background: #a855f7; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; font-weight: bold; cursor: pointer;">Give Key</button>
+        </div>
+      </div>
+      
       <div style="display: flex; gap: 1rem; margin-bottom: 0.5rem;">
         <button class="action-btn btn-warn" id="edit-mute-btn" style="flex:1;">Mute</button>
         <button class="action-btn btn-danger" id="edit-ban-btn" style="flex:1;">Ban</button>
@@ -185,9 +231,33 @@
     </div>
   </div>
 
-  <script type="module" src="auth-modal.js"></script>
+  <!-- Key Vault Modal -->
+  <div class="edit-modal" id="vault-modal">
+    <div class="edit-modal-content" style="max-width: 600px;">
+      <div class="edit-modal-header">
+        <h2>🗝️ Key Vault Manager</h2>
+        <button class="edit-close" onclick="document.getElementById('vault-modal').style.display='none'">&times;</button>
+      </div>
+      <div class="edit-input-group">
+        <label>Package Type</label>
+        <select id="vault-key-type">
+          <option value="7-day">7-Day (Weekly)</option>
+          <option value="30-day">30-Day (Monthly)</option>
+          <option value="lifetime">Lifetime</option>
+        </select>
+      </div>
+      <div class="edit-input-group">
+        <label>Paste Keys (one per line)</label>
+        <textarea id="vault-keys-input" rows="10" style="width: 100%; padding: 0.6rem; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: white; box-sizing: border-box; font-family: monospace; resize: none;"></textarea>
+      </div>
+      <button class="edit-save-btn" id="vault-upload-btn" onclick="window.uploadKeys()">Upload to Vault</button>
+      <div id="vault-status" style="margin-top: 1rem; color: var(--brand-cyan); font-size: 0.85rem; text-align: center; font-weight: bold;"></div>
+    </div>
+  </div>
+
+  <script type="module" src="auth-modal.js?v=6"></script>
   <script type="module">
-    import { auth, db, doc, getDoc, getDocs, setDoc, updateDoc, collection, onAuthStateChanged, onSnapshot } from './firebase-config.js';
+    import { auth, db, doc, getDoc, getDocs, setDoc, updateDoc, collection, onAuthStateChanged, onSnapshot, serverTimestamp, query, orderBy, limit, where } from './firebase-config.js';
 
     let viewerRole = null;
 
@@ -221,6 +291,67 @@
 
     window.usersData = {};
     let usersUnsubscribe = null;
+
+    // Fetch Orders
+    const ordersRef = collection(db, 'orders');
+    const qOrders = query(ordersRef, limit(50));
+    onSnapshot(qOrders, (snapshot) => {
+      const tbody = document.getElementById('orders-tbody');
+      if (snapshot.empty) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 2rem; color: #9ca3af;">No orders found yet.</td></tr>';
+        return;
+      }
+      
+      tbody.innerHTML = '';
+      snapshot.forEach(docSnap => {
+        const order = docSnap.data();
+        if(order.init) return;
+        const tr = document.createElement('tr');
+        
+        let actualStatus = order.status;
+        let backupDateStr = 'N/A';
+
+        if (typeof actualStatus === 'string' && actualStatus.startsWith('{')) {
+            try {
+                let parsed = JSON.parse(actualStatus);
+                if (parsed.status && parsed.status.status) {
+                    actualStatus = parsed.status.status;
+                    if (parsed.status.setAt) backupDateStr = new Date(parsed.status.setAt).toLocaleString();
+                }
+                else if (parsed.status) actualStatus = parsed.status;
+            } catch(e) {}
+        }
+        if (typeof actualStatus !== 'string') actualStatus = 'UNKNOWN';
+        actualStatus = actualStatus.toUpperCase();
+
+        let statusColor = '#9ca3af'; 
+        if(actualStatus.includes('COMPLETED') || actualStatus.includes('PAID')) statusColor = '#10b981';
+        else if(actualStatus.includes('PENDING') || actualStatus.includes('CREATED')) statusColor = '#f59e0b';
+        else if(actualStatus.includes('VOIDED') || actualStatus.includes('CANCELLED')) statusColor = '#ef4444';
+
+        const statusBadge = `<span style="background: ${statusColor}22; color: ${statusColor}; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; font-weight: bold; border: 1px solid ${statusColor}44;">${actualStatus}</span>`;
+
+        let dateStr = backupDateStr;
+        if(order.createdAt && order.createdAt.toDate) {
+            dateStr = order.createdAt.toDate().toLocaleString();
+        } else if (order.createdAt) {
+            dateStr = new Date(order.createdAt).toLocaleString();
+        }
+
+        tr.innerHTML = `
+          <td style="font-family: monospace; color: #9ca3af;">${order.invoice_id || docSnap.id}</td>
+          <td>${order.customer_email || 'Unknown'}</td>
+          <td style="font-weight: bold;">${order.product_title || 'Unknown Product'}</td>
+          <td>${statusBadge}</td>
+          <td style="font-size: 0.85rem; color: #9ca3af;">${dateStr}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }, (err) => {
+      console.log("Orders snapshot error:", err);
+      document.getElementById('orders-tbody').innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 2rem; color: #ef4444;">Error loading orders. Check Security Rules.</td></tr>';
+    });
+
 
     function loadUsers() {
       const tbody = document.getElementById('users-body');
@@ -308,18 +439,19 @@
         }
         
         const resetStatsBtn = document.getElementById('edit-reset-stats-btn');
-        resetStatsBtn.onclick = async () => {
-          let confirmed = false;
-          if (window.showCustomConfirm) {
-            confirmed = await window.showCustomConfirm("Are you sure?", "This will reset highestWin and highestLoss to $0.00.");
-          } else {
-            confirmed = confirm("Reset highestWin and highestLoss to $0.00?");
-          }
-          
-          if (confirmed) {
+        resetStatsBtn.onclick = () => {
+          const resetAction = async () => {
             await updateDoc(doc(db, 'users', uid), { highestWin: 0, highestLoss: 0 });
             if (window.showCustomAlert) window.showCustomAlert("Success", "Stats reset to $0.00!");
             else alert("Stats reset to $0.00!");
+          };
+
+          if (window.showCustomConfirm) {
+            window.showCustomConfirm("Are you sure?", "This will reset highestWin and highestLoss to $0.00.", resetAction);
+          } else {
+            if (confirm("Reset highestWin and highestLoss to $0.00?")) {
+              resetAction();
+            }
           }
         };
       } else {
@@ -349,6 +481,37 @@
         banBtn.onclick = () => window.toggleBan(uid, true);
       }
       
+      if (viewerRole === 'Owner') {
+        const keysSec = document.getElementById('edit-user-keys-section');
+        keysSec.style.display = 'block';
+        const keysList = document.getElementById('user-keys-list');
+        keysList.innerHTML = '<span style="color: #9ca3af; font-size: 0.85rem;">Loading keys...</span>';
+        
+        getDocs(query(collection(db, 'stock_keys'), where('ownerUid', 'in', [uid, user.email || 'NO_EMAIL']))).then(snap => {
+          if (snap.empty) {
+            keysList.innerHTML = '<span style="color: #9ca3af; font-size: 0.85rem;">No keys found for this user.</span>';
+          } else {
+            let html = '';
+            snap.forEach(docSnap => {
+              const kData = docSnap.data();
+              html += `<div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.5); padding: 0.5rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);">
+                <div>
+                  <div style="color: white; font-family: monospace; font-size: 0.9rem;">${kData.key}</div>
+                  <div style="color: #38bdf8; font-size: 0.75rem; text-transform: uppercase;">${kData.type}</div>
+                </div>
+                <button class="action-btn btn-danger" onclick="window.deleteUserKey('${docSnap.id}', '${uid}')" style="padding: 0.2rem 0.5rem; font-size: 0.7rem; min-width: 60px;">Delete</button>
+              </div>`;
+            });
+            keysList.innerHTML = html;
+          }
+        }).catch(err => {
+          keysList.innerHTML = '<span style="color: #ef4444; font-size: 0.85rem;">Failed to load keys.</span>';
+          console.error(err);
+        });
+      } else {
+        document.getElementById('edit-user-keys-section').style.display = 'none';
+      }
+
       document.getElementById('edit-modal').style.display = 'flex';
     };
 
@@ -401,6 +564,119 @@
       if(banStatus && !confirm("Are you sure you want to BAN this user?")) return;
       await updateDoc(doc(db, 'users', uid), { isBanned: banStatus });
       loadUsers();
+    };
+    
+    window.deleteUserKey = async (docId, uid) => {
+      let confirmed = false;
+      if (window.showCustomConfirm) {
+        window.showCustomConfirm("Delete Key?", "Are you sure you want to delete this key?", async () => {
+          try {
+            const { deleteDoc } = await import('https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js');
+            await deleteDoc(doc(db, 'stock_keys', docId));
+            if (window.showCustomAlert) window.showCustomAlert("Success", "Key deleted successfully!");
+            else alert("Key deleted!");
+            window.openEditModal(uid); // refresh the modal
+          } catch(e) {
+            console.error(e);
+            alert("Error deleting key.");
+          }
+        });
+      } else {
+        if (confirm("Delete this key?")) {
+          try {
+            const { deleteDoc } = await import('https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js');
+            await deleteDoc(doc(db, 'stock_keys', docId));
+            alert("Key deleted!");
+            window.openEditModal(uid);
+          } catch(e) {
+            console.error(e);
+            alert("Error deleting key.");
+          }
+        }
+      }
+    };
+
+    window.giveKeyToUser = async () => {
+      const targetUid = document.getElementById('edit-uid').value;
+      const keyType = document.getElementById('give-key-type').value;
+      
+      if(!targetUid) return alert("Error: User not selected.");
+      
+      try {
+        const { query, where, limit, getDocs } = await import('./firebase-config.js');
+        const q = query(collection(db, 'stock_keys'), where('type', '==', keyType), where('available', '==', true), limit(1));
+        const snap = await getDocs(q);
+        
+        if (snap.empty) {
+          alert(`OUT OF STOCK! You don't have any available ${keyType} keys in the vault.`);
+          return;
+        }
+        
+        const keyDoc = snap.docs[0];
+        const keyData = keyDoc.data();
+        
+        let expiresAt = null;
+        if (keyType === '7-day') expiresAt = Date.now() + (7 * 24 * 60 * 60 * 1000);
+        if (keyType === '30-day') expiresAt = Date.now() + (30 * 24 * 60 * 60 * 1000);
+        
+        await updateDoc(keyDoc.ref, {
+          available: false,
+          ownerUid: targetUid,
+          assignedAt: Date.now(),
+          expiresAt: expiresAt
+        });
+        
+        alert(`Success! Assigned key ${keyData.key} (${keyType}) to the user.`);
+      } catch (err) {
+        alert("Failed to give key: " + err.message);
+      }
+    };
+    
+    // Key Vault Logic
+    window.uploadKeys = async function() {
+      const type = document.getElementById('vault-key-type').value;
+      const rawText = document.getElementById('vault-keys-input').value;
+      
+      const lines = rawText.split('\n').map(l => l.trim());
+      const keys = [];
+      for (const line of lines) {
+        if (line.includes('PULLZ-')) {
+          const match = line.match(/PULLZ-[A-Z0-9\-]+/);
+          if (match) keys.push(match[0]);
+        }
+      }
+      
+      if (keys.length === 0) {
+        alert("No valid keys found! Make sure keys contain PULLZ-");
+        return;
+      }
+      
+      const statusDiv = document.getElementById('vault-status');
+      statusDiv.innerText = `Uploading ${keys.length} keys to secure vault... please wait.`;
+      const btn = document.getElementById('vault-upload-btn');
+      btn.disabled = true;
+      btn.style.opacity = '0.5';
+      
+      let successCount = 0;
+      
+      for (let key of keys) {
+        try {
+          await setDoc(doc(db, 'stock_keys', key), {
+            key: key,
+            type: type,
+            available: true,
+            addedAt: serverTimestamp()
+          });
+          successCount++;
+        } catch(e) {
+          console.error(e);
+        }
+      }
+      
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      statusDiv.innerText = `Success! Added ${successCount} keys to the ${type} inventory.`;
+      document.getElementById('vault-keys-input').value = '';
     };
   </script>
 </body>

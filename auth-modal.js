@@ -77,25 +77,42 @@ style.textContent = `
   .toggle-form span:hover { color: white; text-decoration: underline; }
   #register-form { display: none; }
   
-  /* User profile injected in top-left nav */
+  /* Shrink user profile and nav for cleaner look */
   .nav-user-profile {
-    display: flex; align-items: center; gap: 1rem; margin-left: 2rem;
+    display: flex; align-items: center; gap: 0.5rem; margin-left: auto;
   }
   .user-badge {
-    display: flex; align-items: center; gap: 0.5rem;
+    display: flex; align-items: center; gap: 0.4rem;
     background: rgba(6, 182, 212, 0.1); border: 1px solid rgba(6, 182, 212, 0.3);
-    padding: 0.4rem 1rem; border-radius: 20px; color: white; font-size: 0.9rem;
+    padding: 0.2rem 0.8rem; border-radius: 20px; color: white; font-size: 0.8rem;
   }
   .user-badge span { color: var(--brand-cyan); font-weight: bold; }
   .btn-logout {
     background: transparent; border: 1px solid #ef4444; color: #ef4444;
-    padding: 0.4rem 1rem; border-radius: 20px; cursor: pointer; font-size: 0.9rem;
+    padding: 0.2rem 0.8rem; border-radius: 20px; cursor: pointer; font-size: 0.8rem;
     transition: all 0.3s;
   }
   .btn-logout:hover { background: #ef4444; color: white; }
+  
+  /* Active Tab Underline */
+  .active-nav-link {
+    color: white !important;
+    position: relative;
+  }
+  .active-nav-link::after {
+    content: ''; position: absolute; bottom: -6px; left: 0; width: 100%; height: 2px;
+    background: var(--brand-cyan); border-radius: 2px;
+    box-shadow: 0 0 8px var(--brand-cyan);
+  }
+  
+  /* Force smaller nav links universally */
+  .nav-links { gap: 1rem !important; }
+  .nav-links a { font-size: 0.85rem !important; }
+  
   @media (max-width: 768px) {
-    .nav-user-profile { margin-left: 1rem; }
-    .btn-logout, .user-badge { font-size: 0.8rem; padding: 0.3rem 0.6rem; }
+    .nav-user-profile { margin-left: 0.5rem; }
+    .btn-logout, .user-badge { font-size: 0.75rem; padding: 0.2rem 0.5rem; }
+    .nav-links { gap: 0.5rem !important; }
   }
 `;
 document.head.appendChild(style);
@@ -376,19 +393,40 @@ function injectNavUserArea() {
   const brand = document.querySelector('.brand');
   const navLinks = document.querySelector('.nav-links');
 
+  if (navLinks && !document.getElementById('nav-store')) {
+    navLinks.insertAdjacentHTML('beforeend', '<a href="store.html" id="nav-store">Store</a>');
+  }
+
   if (navLinks && !document.getElementById('nav-community')) {
     navLinks.insertAdjacentHTML('beforeend', '<a href="community.html" id="nav-community">Community</a>');
-    navLinks.insertAdjacentHTML('beforeend', '<a href="mines.html" id="nav-mines" style="color: #f59e0b; font-weight: bold;">Mines 💣</a>');
+    navLinks.insertAdjacentHTML('beforeend', '<a href="casino.html" id="nav-casino">Casino 🎰</a>');
   }
 
-  if (brand && !document.getElementById('nav-user-area')) {
-    const userArea = document.createElement('div');
+  let userArea = document.getElementById('nav-user-area');
+  if (navLinks && !userArea) {
+    userArea = document.createElement('div');
     userArea.id = 'nav-user-area';
     userArea.className = 'nav-user-profile';
-    userArea.innerHTML = ``; // Leave empty until auth state is known
-    brand.parentNode.insertBefore(userArea, brand.nextSibling);
-
+    navLinks.appendChild(userArea);
   }
+  
+  // Highlight active tab
+  setTimeout(() => {
+    const currentPath = window.location.pathname.split('/').pop() || 'index.html';
+    const allLinks = document.querySelectorAll('.nav-links a:not(.button)');
+    allLinks.forEach(link => {
+      const href = link.getAttribute('href');
+      if (href && (href === currentPath || (currentPath === 'index.html' && href.startsWith('#')))) {
+        link.classList.add('active-nav-link');
+      }
+    });
+
+    const casinoGames = ['mines.html', 'roulette.html', 'blackjack.html', 'baccarat.html', 'dice.html', 'casino.html'];
+    if (casinoGames.includes(currentPath)) {
+      const casinoLink = document.getElementById('nav-casino');
+      if (casinoLink) casinoLink.classList.add('active-nav-link');
+    }
+  }, 100);
 }
 
 // Since module scripts are deferred, the DOM might already be loaded
@@ -432,14 +470,15 @@ onAuthStateChanged(auth, async (user) => {
 
         const navLinks = document.querySelector('.nav-links');
         if ((role === 'Owner' || role === 'Admin') && navLinks && !document.getElementById('nav-admin')) {
-          navLinks.insertAdjacentHTML('beforeend', '<a href="admin.html" id="nav-admin" style="color: #ef4444; font-weight: bold;">⚙️ Control Panel</a>');
+          navLinks.insertAdjacentHTML('beforeend', '<a href="admin.html" id="nav-admin">⚙️ Admin</a>');
         }
 
         userArea.innerHTML = `
-          <a href="profile.html" class="user-badge" style="text-decoration: none; cursor: pointer; transition: 0.3s; background: rgba(6, 182, 212, 0.15); border: 1px solid var(--brand-cyan); padding: 0.3rem 1rem 0.3rem 0.3rem;">
-            <img src="${avatarSrc}" alt="Avatar" style="width: 24px; height: 24px; border-radius: 50%; margin-right: 8px; object-fit: cover; border: 1px solid var(--brand-cyan);">
+          <a href="profile.html" class="user-badge" style="text-decoration: none; cursor: pointer; transition: 0.3s; background: rgba(6, 182, 212, 0.15); border: 1px solid var(--brand-cyan); padding: 0.2rem 0.8rem 0.2rem 0.2rem;">
+            <img src="${avatarSrc}" alt="Avatar" style="width: 20px; height: 20px; border-radius: 50%; margin-right: 6px; object-fit: cover; border: 1px solid var(--brand-cyan);">
             ${displayName}
           </a>
+          <a class="button button-discord button-small" href="https://discord.com/invite/WnH4xm5fXB" target="_blank" style="padding: 0.3rem 0.8rem; font-size: 0.8rem;">Discord</a>
         `;
       }
     } else {
@@ -463,7 +502,10 @@ onAuthStateChanged(auth, async (user) => {
     }
   } else {
     if (userArea) {
-      userArea.innerHTML = `<button class="button button-ghost button-small" id="nav-login-btn" style="border-color: var(--brand-cyan); color: var(--brand-cyan);">Log In / Sign Up</button>`;
+      userArea.innerHTML = `
+        <button class="button button-ghost button-small" id="nav-login-btn" style="border-color: var(--brand-cyan); color: var(--brand-cyan);">Log In</button>
+        <a class="button button-discord button-small" href="https://discord.com/invite/WnH4xm5fXB" target="_blank" style="padding: 0.3rem 0.8rem; font-size: 0.8rem;">Discord</a>
+      `;
       document.getElementById('nav-login-btn').addEventListener('click', showAuthModal);
     }
 
@@ -506,3 +548,4 @@ export function handleSecureClick(e) {
 
   window.open(targetUrl, '_blank');
 }
+
